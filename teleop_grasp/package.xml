@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<package format="2">
+
+	<name>teleop_grasp</name>
+	<version>1.0.0</version>
+	<description>Compliant teleoperation and gesture-controlled grasping using DNN pose- and gesture estimation in ROS</description>
+
+	<author email="martinandrovich@gmail.com">Martin Androvich</author>
+	<author email="victorstaven@protonmail.com">Victor Melbye Staven</author>
+	<author email="peter@qrholm.eu">Peter Ørholm Nielsen</author>
+	<maintainer email="martinandrovich@gmail.com">Martin Androvich</maintainer>
+
+	<license>BSD</license>
+
+	<url type="repository">https://github.com/teleop-grasp/teleop_grasp</url>
+
+	<!-- build tool -->
+	<buildtool_depend>catkin</buildtool_depend>
+
+	<!-- libraries -->
+	<depend>Eigen3</depend>
+	<!-- <depend>OpenCV</depend> -->
+
+	<!-- ROS packages -->
+	<depend>roscpp</depend>
+	<depend>roslib</depend>
+
+	<depend>ros_utils</depend>
+
+	<!-- <depend>rovi_models</depend> -->
+	<!-- <depend>rovi_planner</depend> -->
+	<!-- <depend>rovi_vision</depend> -->
+
+	<!-- <depend>ur5_controllers</depend> -->
+	<!-- <depend>ur5_description</depend> -->
+	<!-- <depend>ur5_gazebo</depend> -->
+	<!-- <depend>ur5_planner</depend> -->
+
+</package>
