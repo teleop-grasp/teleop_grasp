@@ -73,7 +73,7 @@ sudo apt install python3-catkin-tools
 Navigate to where the workspace should be created (e.g. `~/Desktop`) and run:
 
 ```
-wget .. && chmod +x setup.bash && source setup.bash
+wget --no-check-certificate --content-disposition https://github.com/teleop-grasp/teleop_grasp/raw/main/setup.bash && chmod +x setup.bash && source setup.bash
 ```
 <!-- 
 If the above doesn't work, then download [`setup.bash`](https://github.com/martinandrovich/rovi_system/raw/main/setup.bash) (← right click and save as) to where the workspace should be created. Open a terminal, navigate to the file, make it executable with `chmod +x setup.bash`, and execute the file in the current shell as `source setup.bash`. -->
