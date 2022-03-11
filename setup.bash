@@ -43,16 +43,11 @@ catkin init
 GIT_REPO=$(echo $GIT_URI | grep -Po "(?<=:)(.*)(?=.git)") # extract the "user/repo" part
 REPOS_FILE_PATH="https://raw.githubusercontent.com/$GIT_REPO/$GIT_BRANCH/.repos"
 
-# for privates repos (deprecated)
-# echo -e  "\n\e[104mCloning project package...\e[49m\n" && sleep 1
-# git clone $GIT_URI $WS_PATH/src/$PKG_NAME
-# REPOS_FILE_PATH=$WS_PATH/src/$PKG_NAME/.
-
 # clone packages (vcstool)
-# echo -e  "\n\e[104mCloning packages...\e[49m\n" && sleep 1
-echo -e  "\n\e[104mCloning packages from .repos file...\e[49m\n" && sleep 1
+echo -e  "\n\e[104mCloning packages...\e[49m\n" && sleep 1
 cd $WS_PATH
-vcs import < $REPOS_FILE_PATH
+# vcs import < "$REPOS_FILE_PATH"
+vcs import --input $REPOS_FILE_PATH --debug
 vcs pull src
 
 # update and install any system dependencies (rosdep)
