@@ -55,8 +55,7 @@ target_link_libraries(teleop_grasp ${catkin_LIBRARIES})
 # nodes (executables)
 
 add_executable(demo_teleop_grasp examples/demo_teleop_grasp.cpp)
-target_link_libraries(demo_teleop_grasp ${catkin_LIBRARIES})
-# target_link_libraries(demo_teleop_grasp ${catkin_LIBRARIES} teleop_grasp)
+target_link_libraries(demo_teleop_grasp ${catkin_LIBRARIES} teleop_grasp)
 
 ################################################################################################
 
