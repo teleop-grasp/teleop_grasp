@@ -98,7 +98,7 @@ Then, source the environment variables by running `source devel/setup.bash`.
 **Launch the workcell** by running (after sourcing):
 
 ```
-roslaunch teleop_ws workcell.launch
+roslaunch teleop_grasp workcell.launch # NOT WORKING YET!!!
 ```
 
 An overview of the arguments is located in the [`workcell.launch`](teleop_grasp/launch/workcell.launch) file.
