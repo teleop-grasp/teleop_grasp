@@ -24,16 +24,8 @@
 	<!-- ROS packages -->
 	<depend>roscpp</depend>
 	<depend>roslib</depend>
+	<depend>cv_camera</depend>
 
 	<depend>ros_utils</depend>
-
-	<!-- <depend>rovi_models</depend> -->
-	<!-- <depend>rovi_planner</depend> -->
-	<!-- <depend>rovi_vision</depend> -->
-
-	<!-- <depend>ur5_controllers</depend> -->
-	<!-- <depend>ur5_description</depend> -->
-	<!-- <depend>ur5_gazebo</depend> -->
-	<!-- <depend>ur5_planner</depend> -->
 
 </package>

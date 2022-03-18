@@ -12,6 +12,7 @@ find_package(
 		roscpp
 		roslib
 		ros_utils
+		cv_camera
 )
 
 # find system libraries
@@ -29,6 +30,7 @@ catkin_package(
 		roscpp
 		roslib
 		ros_utils
+		cv_camera
 	DEPENDS
 		EIGEN3
 		# Boost
