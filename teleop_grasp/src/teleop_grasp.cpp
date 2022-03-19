@@ -6,3 +6,9 @@ teleop_grasp::test_system()
 {
 	ROS_INFO_STREAM("node name: " << ros::this_node::getName());
 }
+
+bool
+teleop_grasp::init()
+{
+	return false;
+}
