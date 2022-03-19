@@ -1,0 +1,56 @@
+<launch>
+
+	<!-- ARGUMENTS -->
+	<!-- see README.md for info -->
+
+	<arg name="sim"         doc="Lanch in simulation environment"        default="true"/>
+	<arg name="arm_id"      doc="Name of the panda robot to spawn"       default="panda"/>
+	<arg name="world"       doc="The Gazebo world to use"                default="empty.world"/>
+	
+	<arg name="controller"  doc="Controller to use with ros_control"     default="force_example_controller"/>
+	<arg name="use_gripper" doc="Use the Franka gripper"                 default=""/>
+	<arg name="rviz"        doc="Launch RVIZ"                            default="false"/>
+
+	<arg name="robot_ip"    doc="IP address of physical robot"           default=""/>
+
+	<!-- ################################################################################################################# -->
+
+	<!-- load controller configurations -->
+	<!-- !!! define arm_id first? or do not use subst_value -->
+	<!-- <rosparam file="$(find franka_controllers)/config/franka_controllers.yaml" subst_value="true" /> -->
+	
+	<!-- simulation -->
+	<group if="$(arg sim)">
+
+		<include file="$(find franka_gazebo)/launch/panda.launch">
+			<arg name="gazebo" value="true"/>
+			<arg name="arm_id" value="$(arg arm_id)"/>
+			<arg name="world" value="$(arg world)"/>
+			<arg name="use_gripper" value="$(arg use_gripper)"/>
+			<arg name="controller" value="$(arg controller)"/>
+			<arg name="rviz" value="$(arg rviz)"/>
+		</include>
+
+	</group>
+
+	<!-- real hw -->
+	<group unless="$(arg sim)">
+	
+		<include file="$(find franka_control)/launch/franka_control.launch" >
+			<arg name="robot_ip" value="$(arg robot_ip)" />
+			<arg name="load_gripper" value="$(arg use_gripper)" />
+		</include>
+		
+		<node pkg="controller_manager"
+		      type="spawner"
+		      name="controller_spawner"
+		      respawn="false" output="screen"
+		      args="$(arg controller)"
+		/>
+		
+		<node if="$(arg rviz)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_example_controllers)/launch/robot.rviz"/>
+		<!-- <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" /> -->
+
+	</group>
+
+</launch>
