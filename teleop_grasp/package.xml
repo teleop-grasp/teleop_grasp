@@ -7,7 +7,7 @@
 
 	<author email="martinandrovich@gmail.com">Martin Androvich</author>
 	<author email="victorstaven@protonmail.com">Victor Melbye Staven</author>
-	<author email="peter@qrholm.eu">Peter Ørholm Nielsen</author>
+	<author email="peter@qrholm.dk">Peter Ørholm Nielsen</author>
 	<maintainer email="martinandrovich@gmail.com">Martin Androvich</maintainer>
 
 	<license>BSD</license>
@@ -19,13 +19,12 @@
 
 	<!-- libraries -->
 	<depend>Eigen3</depend>
-	<!-- <depend>OpenCV</depend> -->
+	<!-- <depend>Boost</depend> -->
 
 	<!-- ROS packages -->
 	<depend>roscpp</depend>
 	<depend>roslib</depend>
-	<depend>cv_camera</depend>
-
 	<depend>ros_utils</depend>
+	<depend>cv_camera</depend>
 
 </package>

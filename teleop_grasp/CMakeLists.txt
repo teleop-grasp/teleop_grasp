@@ -32,7 +32,7 @@ catkin_package(
 		ros_utils
 		cv_camera
 	DEPENDS
-		EIGEN3
+		Eigen3
 		# Boost
 )
 
@@ -58,6 +58,9 @@ target_link_libraries(teleop_grasp ${catkin_LIBRARIES})
 
 add_executable(demo_teleop_grasp examples/demo_teleop_grasp.cpp)
 target_link_libraries(demo_teleop_grasp ${catkin_LIBRARIES} teleop_grasp)
+
+add_executable(pipeline src/pipeline.cpp)
+target_link_libraries(pipeline ${catkin_LIBRARIES} teleop_grasp)
 
 ################################################################################################
 
