@@ -49,7 +49,7 @@ For more information, please refer to the `README.md` of a specific package.
 
 ## Installation
 
-The project is tested on Ubuntu `20.04.3 LTS`. Built using [`catkin_tools`][catkin_tools] with `CMake 3.4` and `gcc 9.3.0-17`.
+The project is tested on Ubuntu `20.04.3 LTS`. Built using [`catkin_tools`][catkin_tools] with `CMake 3.12` and `gcc 9.3.0-17`.
 
 <details>
 <summary><strong>Installing ROS and dependencies</strong></summary></br>
@@ -84,26 +84,25 @@ If the above doesn't work, then download [`setup.bash`](https://github.com/marti
 
 ### Running the project
 
-Navigate to the `teleop_ws` workspace (or run `teleop_ws` in terminal). The `teleop_ws` command will automatically source the workspace and navigate to its directory.
+Run `teleop_ws` in terminal to  automatically source the workspace and navigate to its directory.
 
 **Build the workspace** using:
 
 ```
 catkin build
-catkin build_compile_cmd # only if using clangd extension
 ```
 
-Then, source the environment variables by running `source devel/setup.bash`. 
+Then, source the environment variables by running `source devel/setup.bash` or `teleop_ws`.
 
 **Launch the workcell** by running (after sourcing):
 
 ```
-roslaunch teleop_grasp workcell.launch # NOT WORKING YET!!!
+roslaunch teleop_grasp pipeline.launch
 ```
 
-An overview of the arguments is located in the [`workcell.launch`](teleop_grasp/launch/workcell.launch) file.
+An overview of the arguments is located in the [`pipeline.launch`](teleop_grasp/launch/pipeline.launch) file.
 
-### Experiments
+### Experiments (TODO)
 
 Experiments in `teleop_grasp` are contained in the `teleop_grasp/tests/` directory. An experiment of `<name>` can be implemented in either C++ or Python, and is structured as:
 
