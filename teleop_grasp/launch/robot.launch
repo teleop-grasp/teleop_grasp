@@ -8,7 +8,7 @@
 	<arg name="world"       doc="The Gazebo world to use"                default="empty.world"/>
 	
 	<arg name="controller"  doc="Controller to use with ros_control"     default="force_example_controller"/>
-	<arg name="use_gripper" doc="Use the Franka gripper"                 default=""/>
+	<arg name="use_gripper" doc="Use the Franka gripper"                 default="true"/>
 	<arg name="rviz"        doc="Launch RVIZ"                            default="false"/>
 
 	<arg name="robot_ip"    doc="IP address of physical robot"           default=""/>
