@@ -1,0 +1,19 @@
+franka_joint_position_pd_gravity_controller:
+    type: franka_controllers/JointPositionPDGravityController
+    state_publish_rate: 100
+    arm_id: panda
+    joint_names:
+        - $(arg arm_id)_joint1
+        - $(arg arm_id)_joint2
+        - $(arg arm_id)_joint3
+        - $(arg arm_id)_joint4
+        - $(arg arm_id)_joint5
+        - $(arg arm_id)_joint6
+        - $(arg arm_id)_joint7 # added
+
+    home: [1.57, -1.57, 1.57, 1.57, 1.57, 0, 0]
+
+    kd: [200, 200, 200, 200, 200, 200, 200]
+    kp: [800, 800, 800, 800, 800, 800, 800]
+
+

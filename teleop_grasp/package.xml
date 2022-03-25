@@ -26,5 +26,6 @@
 	<depend>roslib</depend>
 	<depend>ros_utils</depend>
 	<depend>cv_camera</depend>
+	<depend>franka_controllers</depend>
 
 </package>
