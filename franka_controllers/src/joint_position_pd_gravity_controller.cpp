@@ -222,10 +222,6 @@ JointPositionPDGravityController::callback_command(const std_msgs::Float64MultiA
     }
     // write commands to command buffer
     commands_buffer.writeFromNonRT(msg->data);
-
-    // for testing purposes
-    // for (size_t i = 0; i < num_joints; ++i)
-    //     joint_handles_[i].setCommand(msg->data[i]);
 }
 
 } // namespace franka_controllers
