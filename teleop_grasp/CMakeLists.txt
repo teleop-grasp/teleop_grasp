@@ -13,7 +13,7 @@ find_package(
 		roslib
 		ros_utils
 		cv_camera
-		franka_controllers # added
+		franka_controllers
 )
 
 # find system libraries
@@ -32,9 +32,9 @@ catkin_package(
 		roslib
 		ros_utils
 		cv_camera
-		franka_controllers # added
+		franka_controllers
 	DEPENDS
-		Eigen3
+		EIGEN3 # uppercase due to catkin_package() warning
 		# Boost
 )
 
