@@ -14,13 +14,10 @@ find_package(
 		roscpp
 		roslib
 		std_msgs
-		xacro
-		gazebo_ros
 		controller_manager
 		controller_interface
-		robot_state_publisher
 		pluginlib
-		franka_hw # added
+		franka_hw
 )
 
 catkin_package(
@@ -33,13 +30,10 @@ catkin_package(
 		roscpp
 		roslib
 		std_msgs
-		xacro
-		gazebo_ros
 		controller_manager
 		controller_interface
-		robot_state_publisher
 		pluginlib
-		franka_hw # added
+		franka_hw
 	DEPENDS
 		EIGEN3
 )
