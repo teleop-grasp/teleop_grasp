@@ -7,7 +7,7 @@
 	<arg name="arm_id"      doc="Name of the panda robot to spawn"       default="panda"/>
 	<arg name="world"       doc="The Gazebo world to use"                default="empty.world"/>
 	
-	<arg name="controller"  doc="Controller to use with ros_control"     default="force_example_controller"/>
+	<arg name="controller"  doc="Controller to use with ros_control"     default="franka_joint_position_pd_gravity_controller"/>
 	<arg name="use_gripper" doc="Use the Franka gripper"                 default="true"/>
 	<arg name="rviz"        doc="Launch RVIZ"                            default="false"/>
 
@@ -16,8 +16,7 @@
 	<!-- ################################################################################################################# -->
 
 	<!-- load controller configurations -->
-	<!-- !!! define arm_id first? or do not use subst_value -->
-	<!-- <rosparam file="$(find franka_controllers)/config/franka_controllers.yaml" subst_value="true" /> -->
+	<rosparam file="$(find franka_controllers)/config/franka_controllers.yaml" subst_value="true" />
 	
 	<!-- simulation -->
 	<group if="$(arg sim)">
