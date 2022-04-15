@@ -1,9 +1,8 @@
 <library path="lib/libfranka_controllers">
-  <class name="franka_controllers/JointPositionPDGravityController"
-    type="franka_controllers::JointPositionPDGravityController" 
-    base_class_type="controller_interface::ControllerBase">
-        <description>
-      Joint position control using a PD gravity compensation control loop for the franka robot.
-    </description>
-    </class>
+	<class name="franka_controllers/JointPositionPDGravityController" type="franka_controllers::JointPositionPDGravityController" base_class_type="controller_interface::ControllerBase">
+		<description>Joint position control using a PD gravity compensation control loop for the Franka robot.</description>
+	</class>
+	<class name="franka_controllers/CartesianImpedanceController" type="franka_controllers::CartesianImpedanceController" base_class_type="controller_interface::ControllerBase">
+		<description>Cartesian impedance controller for the Franka robot.</description>
+	</class>
 </library>

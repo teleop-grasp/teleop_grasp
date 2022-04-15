@@ -14,6 +14,7 @@ find_package(
 		roscpp
 		roslib
 		std_msgs
+		ros_utils
 		controller_manager
 		controller_interface
 		pluginlib
@@ -30,6 +31,7 @@ catkin_package(
 		roscpp
 		roslib
 		std_msgs
+		ros_utils
 		controller_manager
 		controller_interface
 		pluginlib
@@ -57,6 +59,7 @@ include_directories(
 add_library(franka_controllers
 		# src/lib_franka_controllers.cpp # interface
 		src/joint_position_pd_gravity_controller.cpp
+		src/cartesian_impedance_controller.cpp
 )
 target_link_libraries(franka_controllers ${catkin_LIBRARIES})
 
