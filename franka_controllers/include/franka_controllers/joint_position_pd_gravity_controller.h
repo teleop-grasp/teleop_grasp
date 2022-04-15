@@ -32,13 +32,13 @@ namespace franka_controllers
 		~JointPositionPDGravityController() { sub_command.shutdown(); }
 
 		bool 
-		init(hardware_interface::RobotHW *hw, ros::NodeHandle &nh) override;
+		init(hardware_interface::RobotHW *hw, ros::NodeHandle& nh) override;
 
 		void 
-		starting(const ros::Time &time) override;
+		starting(const ros::Time& time) override;
 
 		void 
-		update(const ros::Time &time, const ros::Duration &period) override;
+		update(const ros::Time& time, const ros::Duration& period) override;
 
 	private:
 
@@ -49,8 +49,8 @@ namespace franka_controllers
 		std::unique_ptr<franka_hw::FrankaModelHandle>       model_handle;
 		std::unique_ptr<franka_hw::FrankaStateHandle>       state_handle;
 		
-		Eigen::Matrix7d                                     Kp; // stiffness
-		Eigen::Matrix7d                                     Kd; // dampening
+		Eigen::Matrix7d                                     kp; // stiffness
+		Eigen::Matrix7d                                     kd; // dampening
 		double                                              dtau_max;
 		
 		ros::Subscriber                                     sub_command;
@@ -67,9 +67,9 @@ namespace franka_controllers
 		get_gravity();
 
 		Eigen::Vector7d
-		saturate_rotatum(const Eigen::Vector7d &tau_des, const double period = 0.001 /* [s] */);
+		saturate_rotatum(const Eigen::Vector7d& tau_des, const double dt = 0.001 /* [s] */);
 
 		void
-		callback_command(const std_msgs::Float64MultiArrayConstPtr &msg);
+		callback_command(const std_msgs::Float64MultiArrayConstPtr& msg);
 	};
 }
