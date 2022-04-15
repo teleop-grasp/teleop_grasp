@@ -131,6 +131,13 @@ CartesianImpedanceController::init(hardware_interface::RobotHW *hw, ros::NodeHan
 		ROS_ERROR_STREAM(CONTROLLER_NAME << ": Could not read kd gain");
 		return false;
 	}
+	
+	// read kn gains from config
+	if (not nh.getParam("kn", kn))
+	{
+		ROS_ERROR_STREAM(CONTROLLER_NAME << ": Could not read kn gain");
+		return false;
+	}
 
 	// read dtau_max from config (-1 to disable)
 	if (not nh.getParam("dtau_max", dtau_max))
@@ -159,6 +166,7 @@ CartesianImpedanceController::init(hardware_interface::RobotHW *hw, ros::NodeHan
 	ROS_WARN_STREAM("Initialized " << CONTROLLER_NAME << " with:\n\n"
 		<< "kp = "        << kp.diagonal().transpose() << "\n"
 		<< "kd = "        << kd.diagonal().transpose() << "\n"
+		<< "kn = "        << kn << "\n"
 		<< "dtau_max = "  << dtau_max << "\n"
 		<< "slew_rate = " << slew_rate  << "\n"
 	);
@@ -199,15 +207,15 @@ CartesianImpedanceController::update(const ros::Time& time, const ros::Duration&
 	// cartesian torque
 	// u = g(q) + J(q)' * Kp * x_de - J(q)' * Kd * J(q) * dq
 	Eigen::Vector7d tau_task = J.transpose() * (-kp * x_de - kd * (J * dq));
-	Eigen::Vector7d tau_d = J.transpose() * kp * x_de - J.transpose() * kd * J * dq + g;
-	tau_d = tau_task + C;
+	// Eigen::Vector7d tau_d = J.transpose() * kp * x_de - J.transpose() * kd * J * dq + g;
+	// tau_d = tau_task + C;
 	
 	// nullspace torque
-	const auto J_T_pinv = Eigen::pseudo_inverse(J.transpose(), 0.2); // with dampening
+	const auto J_T_pinv = Eigen::pseudo_inverse(J.transpose(), 0.2); // damped pseudo inverse
 	Eigen::Vector7d tau_nullspace = (Eigen::Matrix7d::Identity() - J.transpose() * J_T_pinv) * (kn * (qN_d - q) - (2.0 * sqrt(kn)) * dq);
 	
 	// desired joint torque
-	// Eigen::Vector7d tau_d = tau_task + tau_nullspace + C;
+	Eigen::Vector7d tau_d = tau_task + tau_nullspace + C;
 
 	// saturate rate-of-effort (rotatum)
 	if (dtau_max > 0)

@@ -31,6 +31,7 @@ franka_cartesian_impedance_controller:
 
     kp: [200, 200, 200, 10, 10, 10] # dampening [[pos], [ori]]
     kd: [28.2843, 28.2843, 28.2843, 6.32456, 6.32456, 6.32456] # stiffness [[pos], [ori]]
+    kn: 0.5 # nullspace stiffness
     dtau_max: 1000 # set to -1 to disable rotatum saturation
     slew_rate: 0.005 # @ 1000 Hz
 

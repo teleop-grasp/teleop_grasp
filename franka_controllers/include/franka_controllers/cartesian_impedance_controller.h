@@ -60,7 +60,7 @@ namespace franka_controllers
 		Eigen::Vector7d                                     qN_d;
 		Eigen::Matrix6d                                     kp;
 		Eigen::Matrix6d                                     kd;
-		double                                              kn = 0.5;
+		double                                              kn;
 		double                                              dtau_max;
 		double                                              slew_rate;
 
