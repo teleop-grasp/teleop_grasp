@@ -64,6 +64,9 @@ target_link_libraries(demo_teleop_grasp ${catkin_LIBRARIES} teleop_grasp)
 add_executable(pipeline src/pipeline.cpp)
 target_link_libraries(pipeline ${catkin_LIBRARIES} teleop_grasp)
 
+add_executable(teleoperation src/teleoperation.cpp)
+target_link_libraries(teleoperation ${catkin_LIBRARIES} teleop_grasp)
+
 ################################################################################################
 
 # install targets
@@ -81,6 +84,7 @@ install(
 install(
 	DIRECTORY
 		include/teleop_grasp/
+		include/teleoperation/
 	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 

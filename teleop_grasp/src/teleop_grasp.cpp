@@ -12,3 +12,15 @@ teleop_grasp::init()
 {
 	return false;
 }
+
+void
+teleop_grasp::gesture_est(const std_msgs::Bool& is_open)
+{
+
+}
+
+void
+teleop_grasp::pose_est(const geometry_msgs::Pose gripper_pose)
+{
+	
+}
