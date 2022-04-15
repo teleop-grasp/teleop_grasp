@@ -6,7 +6,7 @@
 	<arg name="cam_device"  doc="Name of the image capture device"       default="/dev/video0"/>
 
 	<arg name="sim"         doc="Lanch in simulation environment"        default="true"/>
-	<arg name="world"       doc="The Gazebo world to use"                default="empty.world"/>
+	<arg name="world"       doc="The Gazebo world to use"                default="workcell.world"/>
 	
 	<arg name="controller"  doc="Controller to use with ros_control"     default="force_example_controller"/>
 	<arg name="use_gripper" doc="Use the Franka gripper"                 default="true"/>

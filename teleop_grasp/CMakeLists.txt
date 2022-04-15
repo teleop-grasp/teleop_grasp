@@ -11,6 +11,7 @@ find_package(
 	COMPONENTS
 		roscpp
 		roslib
+		gazebo_ros
 		ros_utils
 		cv_camera
 		franka_controllers
@@ -30,6 +31,7 @@ catkin_package(
 	CATKIN_DEPENDS
 		roscpp
 		roslib
+		gazebo_ros
 		ros_utils
 		cv_camera
 		franka_controllers
@@ -87,6 +89,10 @@ install(
 		include/teleoperation/
 	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
+
+## install gazebo stuff
+install(DIRECTORY models DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(DIRECTORY worlds DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 ################################################################################################
 

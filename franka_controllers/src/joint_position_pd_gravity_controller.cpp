@@ -99,39 +99,39 @@ JointPositionPDGravityController::init(hardware_interface::RobotHW *hw, ros::Nod
 	// read Kp gains from config
 	if (std::vector<double> vec_kp; nh.getParam("kp", vec_kp) and vec_kp.size() == num_joints)
 	{
-		Kp = Eigen::Vector7d(vec_kp.data()).asDiagonal();
+		kp = Eigen::Vector7d(vec_kp.data()).asDiagonal();
 	}
 	else
 	{
 		ROS_ERROR_STREAM(CONTROLLER_NAME << ": Could not read Kp gain");
 		return false;
 	}
-	
+
 	// read kd gains from config
 	if (std::vector<double> vec_kd; nh.getParam("kd", vec_kd) and vec_kd.size() == num_joints)
 	{
-		Kd = Eigen::Vector7d(vec_kd.data()).asDiagonal();
+		kd = Eigen::Vector7d(vec_kd.data()).asDiagonal();
 	}
 	else
 	{
 		ROS_ERROR_STREAM(CONTROLLER_NAME << ": Could not read Kd gain");
 		return false;
 	}
-	
+
 	// read dtau_max from config (-1 to disable)
 	if (not nh.getParam("dtau_max", dtau_max))
 	{
 		ROS_ERROR_STREAM(CONTROLLER_NAME << ": Could not read dtau_max ");
 		return false;
 	}
-	
+
 	// read initial (home) joint position from config
 	if (std::vector<double> vec_q_d; nh.getParam("q_d", vec_q_d) and vec_q_d.size() == num_joints)
 	{
 		q_d = Eigen::Vector7d(vec_q_d.data());
 	}
 	else
-	{ 
+	{
 		ROS_ERROR_STREAM(CONTROLLER_NAME << ": Could not read q_d");
 		return false;
 	}
@@ -140,11 +140,11 @@ JointPositionPDGravityController::init(hardware_interface::RobotHW *hw, ros::Nod
 	sub_command = nh.subscribe<std_msgs::Float64MultiArray>("command", 1,& JointPositionPDGravityController::callback_command, this);
 
 	// init complete
-	ROS_INFO_STREAM("Initialized " << CONTROLLER_NAME << " with: "
-		<< "Kp = "       << Kp.diagonal().transpose() << ", "
-		<< "Kd = "       << Kd.diagonal().transpose() << ", "
-		<< "q_d = "      << q_d.transpose()  << ", "
-		<< "dtau_max = " << dtau_max
+	ROS_WARN_STREAM("Initialized " << CONTROLLER_NAME << " with:\n\n"
+		<< "Kp = "       << kp.diagonal().transpose() << "\n"
+		<< "Kd = "       << kd.diagonal().transpose() << "\n"
+		<< "q_d = "      << q_d.transpose() << "\n"
+		<< "dtau_max = " << dtau_max << "\n"
 	);
 
 	return true;
@@ -176,11 +176,12 @@ JointPositionPDGravityController::update(const ros::Time& time, const ros::Durat
 	const auto g  = get_gravity();
 
 	// compute controller effort
-	Eigen::Vector7d tau_d = Kp * (q_d - q) - Kd * dq + g;
+	Eigen::Vector7d tau_d = kp * (q_d - q) - kd * dq + g;
 
 	// saturate rate-of-effort (rotatum)
 	if (dtau_max > 0)
 		tau_d = saturate_rotatum(tau_d, period.toSec());
+
 
 	// set desired command on joint handles
 	for (size_t i = 0; i < num_joints; ++i)
@@ -209,7 +210,7 @@ JointPositionPDGravityController::get_gravity()
 }
 
 Eigen::Vector7d
-JointPositionPDGravityController::saturate_rotatum(const Eigen::Vector7d& tau_d, const double period)
+JointPositionPDGravityController::saturate_rotatum(const Eigen::Vector7d& tau_d, const double dt)
 {
 	// previous desired torque and saturated torque
 	static Eigen::Vector7d tau_d_prev = Eigen::Vector7d::Zero();
@@ -218,8 +219,8 @@ JointPositionPDGravityController::saturate_rotatum(const Eigen::Vector7d& tau_d,
 	// compute saturated torque
 	for (size_t i = 0; i < tau_d_sat.size(); ++i)
 	{
-		const double dtau = (tau_d[i] - tau_d_prev[i]) / period;
-		tau_d_sat[i] = tau_d_prev[i] + std::max(std::min(dtau, dtau_max * period), -(dtau_max * period));
+		const double dtau = (tau_d[i] - tau_d_prev[i]) / dt;
+		tau_d_sat[i] = tau_d_prev[i] + std::max(std::min(dtau * dt, dtau_max * dt), -(dtau_max * dt));
 	}
 
 	// save for next iteration and return
