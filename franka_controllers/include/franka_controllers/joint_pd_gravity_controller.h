@@ -20,16 +20,16 @@ namespace Eigen
 
 namespace franka_controllers
 {
-	class JointPositionPDGravityController final : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface,
+	class JointPDGravityController final : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface,
 	                                                                                                     hardware_interface::EffortJointInterface,
 	                                                                                                     franka_hw::FrankaStateInterface>
 	{
 	public:
 	
-		static inline constexpr auto CONTROLLER_NAME = "JointPositionPDGravityController";
+		static inline constexpr auto CONTROLLER_NAME = "JointPDGravityController";
 
-		JointPositionPDGravityController() {}
-		~JointPositionPDGravityController() { sub_command.shutdown(); }
+		JointPDGravityController() {}
+		~JointPDGravityController() { sub_command.shutdown(); }
 
 		bool 
 		init(hardware_interface::RobotHW *hw, ros::NodeHandle& nh) override;
