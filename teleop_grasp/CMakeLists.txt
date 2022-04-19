@@ -15,6 +15,7 @@ find_package(
 		ros_utils
 		cv_camera
 		franka_controllers
+		franka_gripper
 )
 
 # find system libraries
@@ -35,6 +36,7 @@ catkin_package(
 		ros_utils
 		cv_camera
 		franka_controllers
+		franka_gripper
 	DEPENDS
 		EIGEN3 # uppercase due to catkin_package() warning
 		# Boost

@@ -2,65 +2,74 @@
 #include "geometry_msgs/Pose.h"
 #include "ros/init.h"
 #include "ros/node_handle.h"
+#include "ros/publisher.h"
+#include "ros/rate.h"
+#include "ros/subscriber.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
-#include <teleoperation/teleoperation.h>
+#include "teleop_grasp/teleop_grasp.h"
 
-
-
-/*
-todo:
- + init -> look for topics, do they exist?
- + give callbacks to subs
-*/
-
-
-
-Teleoperation::Teleoperation(ros::NodeHandle& nh) 
+namespace teleoperation
 {
-	this->nh = nh;
+	std::string grasp = "";
+	std::string pose = "";
+	std::string name = "";
+
+	ros::Publisher grasp_pub;
+	ros::Publisher pose_pub;
+
+	ros::Subscriber grasp_sub;
+	ros::Subscriber pose_sub;
+
+	void gesture_est(const std_msgs::BoolConstPtr& msg)
+	{
+		auto msg_bool = bool(msg->data);
+		if ( msg_bool )
+			teleop_grasp::set_gripper(teleop_grasp::CMD::OPEN);
+		else
+			teleop_grasp::set_gripper(teleop_grasp::CMD::CLOSE);
+	}
+
+	void follow_franka(const geometry_msgs::PoseConstPtr& msg)
+	{
+		ROS_INFO("[FOLLOW_FRANKA]");
+	}
+
+
+	bool init(ros::NodeHandle& nh)
+	{
+		if (not nh.getParam("teleop_grasp/grasp_topic", grasp)) 
+		{
+			ROS_ERROR_STREAM(name << ": Could not read parameter grasp");
+			return false;
+		}
+
+		if (not nh.getParam("teleop_grasp/pose_topic", pose))
+		{
+			ROS_ERROR_STREAM(name << ": Could not read parameter pose");
+			return false;
+		}
+
+		grasp_sub = nh.subscribe<std_msgs::Bool>(grasp, 1,&teleoperation::gesture_est);
+		pose_sub = nh.subscribe<geometry_msgs::Pose>(pose,1,&teleoperation::follow_franka);
+
+		return true;
+	}
 }
 
-Teleoperation::~Teleoperation() 
+int 
+main(int argc, char** argv) 
 {
-
-}
-
-void 
-Teleoperation::test_system()
-{
-
-}
-
-bool 
-Teleoperation::init()
-{
-
-	// sub 
-	gesture_est = nh.subscribe<std_msgs::Bool>( "gesture_est", 1, &teleop_grasp::gesture_est);
-	pose_est = nh.subscribe<geometry_msgs::Pose>( "pose_est", 1, &teleop_grasp::pose_est);
-
-	// pub
-	gasp = nh.advertise<std_msgs::Bool>(this->gasp_topic, 1000);
-	pose = nh.advertise<std_msgs::Float64>(this->pose_topic,1000);
-
-	return false;
-}
-
-
-
-int main(int argc, char** argv) 
-{
-
 	ros::init(argc, argv, "teleoperation");
-
 	ros::NodeHandle nh;
+	teleoperation::init(nh);
 
-	Teleoperation tel(nh);
+	ROS_INFO_STREAM("starting " << nh.getNamespace() << "..." );
 
-	tel.init();
+	ros::Rate rate(0.5);
 
-	std::cout << "test" << std::endl;
+	while (ros::ok()) 
+		ros::spinOnce();
 
 	return 0;
 }
