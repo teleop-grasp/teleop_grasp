@@ -26,16 +26,16 @@ namespace Eigen
 
 namespace franka_controllers
 {
-	class CartesianImpedanceController final : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface,
+	class CartesianPDNullspaceController final : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface,
 	                                                                                                 hardware_interface::EffortJointInterface,
 	                                                                                                 franka_hw::FrankaStateInterface>
 	{
 	public:
 
-		static inline constexpr auto CONTROLLER_NAME = "CartesianImpedanceController";
+		static inline constexpr auto CONTROLLER_NAME = "CartesianPDController";
 
-		CartesianImpedanceController() {}
-		~CartesianImpedanceController() { sub_command.shutdown(); }
+		CartesianPDNullspaceController() {}
+		~CartesianPDNullspaceController() { sub_command.shutdown(); }
 
 		bool
 		init(hardware_interface::RobotHW *hw, ros::NodeHandle& nh) override;
@@ -48,23 +48,23 @@ namespace franka_controllers
 
 	private:
 
-		std::string                                         arm_id;
-		size_t                                              num_joints;
-		std::vector<std::string>                            joint_names;
-		std::vector<hardware_interface::JointHandle>        joint_handles;
-		std::unique_ptr<franka_hw::FrankaModelHandle>       model_handle;
-		std::unique_ptr<franka_hw::FrankaStateHandle>       state_handle;
+		std::string                                   arm_id;
+		size_t                                        num_joints;
+		std::vector<std::string>                      joint_names;
+		std::vector<hardware_interface::JointHandle>  joint_handles;
+		std::unique_ptr<franka_hw::FrankaModelHandle> model_handle;
+		std::unique_ptr<franka_hw::FrankaStateHandle> state_handle;
 
-		std::mutex                                          mtx_T_ref;
-		Eigen::Isometry3d                                   T_d, T_ref;
-		Eigen::Vector7d                                     qN_d;
-		Eigen::Matrix6d                                     kp;
-		Eigen::Matrix6d                                     kd;
-		double                                              kn;
-		double                                              dtau_max;
-		double                                              slew_rate;
+		std::mutex                                    mtx_T_ref;
+		Eigen::Isometry3d                             T_d, T_ref;
+		Eigen::Vector7d                               qN_d;
+		Eigen::Matrix6d                               kp;
+		Eigen::Matrix6d                               kd;
+		double                                        kn;
+		double                                        dtau_max;
+		double                                        slew_rate;
 
-		ros::Subscriber                                     sub_command;
+		ros::Subscriber                               sub_command;
 		
 		struct RobotState
 		{
