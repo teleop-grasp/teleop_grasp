@@ -28,6 +28,7 @@
 	<depend>ros_utils</depend>
 	<depend>cv_camera</depend>
 	<depend>franka_controllers</depend>
+	<depend>franka_gripper</depend>
 	
 	<export>
 		<!-- https://github.com/sloretz/gazebo_model_path_example -->

@@ -1,0 +1,4 @@
+teleop_grasp:
+    pose_topic: "pose_estimate"
+    grasp_topic: "grasp_estimate"
+    cmd_topic: cmd_topic
