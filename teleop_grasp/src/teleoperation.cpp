@@ -13,10 +13,7 @@ namespace teleoperation
 {
 	std::string grasp = "";
 	std::string pose = "";
-	std::string name = "";
-
-	ros::Publisher grasp_pub;
-	ros::Publisher pose_pub;
+	std::string name = "teleoperation";
 
 	ros::Subscriber grasp_sub;
 	ros::Subscriber pose_sub;
@@ -60,7 +57,7 @@ namespace teleoperation
 int 
 main(int argc, char** argv) 
 {
-	ros::init(argc, argv, "teleoperation");
+	ros::init(argc, argv, teleoperation::name);
 	ros::NodeHandle nh;
 	teleoperation::init(nh);
 

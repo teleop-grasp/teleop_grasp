@@ -37,7 +37,7 @@ teleop_grasp::set_gripper(teleop_grasp::CMD open_or_close)
 	
 	ROS_WARN("Waiting for action server to start..."); 
 
-	bool success = action.isServerConnected(); //will wait for infinite tim
+	bool success = action.isServerConnected();
 
 	if (success) 
 		ROS_WARN("Connected successfully!...");
@@ -48,18 +48,17 @@ teleop_grasp::set_gripper(teleop_grasp::CMD open_or_close)
 
 	franka_gripper::GraspAction msg;
 
+	msg.action_goal.goal.speed = 0.1;
+
 	if (open_or_close == teleop_grasp::CMD::OPEN)
 	{
 		gripper_state = CMD::OPEN;
-		msg.action_goal.goal.speed = 0.1;
 		msg.action_goal.goal.width = 0.045;
 		action.sendGoal(msg.action_goal.goal);
 	}
 	else
 	{
-		ROS_WARN("sending closing msg...");
 		gripper_state = CMD::CLOSE;
-		msg.action_goal.goal.speed = 0.1;
 		msg.action_goal.goal.width = 0.01;
 		action.sendGoal(msg.action_goal.goal);
 	}
