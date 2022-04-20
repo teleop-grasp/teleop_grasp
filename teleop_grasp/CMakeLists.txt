@@ -11,8 +11,11 @@ find_package(
 	COMPONENTS
 		roscpp
 		roslib
+		gazebo_ros
 		ros_utils
 		cv_camera
+		franka_controllers
+		franka_gripper
 )
 
 # find system libraries
@@ -29,10 +32,13 @@ catkin_package(
 	CATKIN_DEPENDS
 		roscpp
 		roslib
+		gazebo_ros
 		ros_utils
 		cv_camera
+		franka_controllers
+		franka_gripper
 	DEPENDS
-		EIGEN3
+		EIGEN3 # uppercase due to catkin_package() warning
 		# Boost
 )
 
@@ -59,6 +65,12 @@ target_link_libraries(teleop_grasp ${catkin_LIBRARIES})
 add_executable(demo_teleop_grasp examples/demo_teleop_grasp.cpp)
 target_link_libraries(demo_teleop_grasp ${catkin_LIBRARIES} teleop_grasp)
 
+add_executable(pipeline src/pipeline.cpp)
+target_link_libraries(pipeline ${catkin_LIBRARIES} teleop_grasp)
+
+add_executable(teleoperation src/teleoperation.cpp)
+target_link_libraries(teleoperation ${catkin_LIBRARIES} teleop_grasp)
+
 ################################################################################################
 
 # install targets
@@ -76,8 +88,13 @@ install(
 install(
 	DIRECTORY
 		include/teleop_grasp/
+		include/teleoperation/
 	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
+
+## install gazebo stuff
+install(DIRECTORY models DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(DIRECTORY worlds DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 ################################################################################################
 

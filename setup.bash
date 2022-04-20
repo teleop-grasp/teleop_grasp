@@ -8,13 +8,12 @@ PKG_NAME="teleop_grasp"
 PROJ_NAME="teleop-grasp"
 GIT_URI="git@github.com:teleop-grasp/teleop_grasp.git" # must be SSH
 GIT_BRANCH="main"
-DEMO_CMD="roslaunch teleop_grasp workcell.launch"
 
 # check that script is sourced
 # https://stackoverflow.com/questions/2683279/how-to-detect-if-a-script-is-being-sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
-	echo "Must be sourced; please run 'source setup.bash'."; exit
+	echo "Must be sourced; please run as 'source setup.bash'."; exit
 fi
 
 # check dependencies
@@ -68,4 +67,4 @@ cd .. && rm setup.bash
 
 # finish
 echo -e  "\n\e[104mInstallation complete!\e[49m\n"
-echo -e "The project has been installed.\n\nSource the workspace and run '$DEMO_CMD' to verify the installation. Run '$WS_NAME' in any terminal to automatically configure the workspace and navigate to its directory.\n"
+echo -e "The project has been installed.\n\nRun '$WS_NAME' in any terminal to configure the workspace and navigate to its directory.\n"

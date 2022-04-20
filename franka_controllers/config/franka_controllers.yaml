@@ -1,0 +1,36 @@
+joint_pd_gravity_controller:
+    type: franka_controllers/JointPDGravityController
+    state_publish_rate: 100
+    arm_id: $(arg arm_id)
+    joint_names:
+        - $(arg arm_id)_joint1
+        - $(arg arm_id)_joint2
+        - $(arg arm_id)_joint3
+        - $(arg arm_id)_joint4
+        - $(arg arm_id)_joint5
+        - $(arg arm_id)_joint6
+        - $(arg arm_id)_joint7
+
+    q_d: [0, 0, 0, -1.57, 0, 1.57, 0.79]
+    kp: [800, 800, 800, 800, 800, 800, 800]
+    kd: [400, 400, 400, 400, 400, 400, 400]
+    dtau_max: 1000 # set to -1 to disable rotatum saturation
+
+cartesian_pd_nullspace_controller:
+    type: franka_controllers/CartesianPDNullspaceController
+    state_publish_rate: 100
+    arm_id: $(arg arm_id)
+    joint_names:
+        - $(arg arm_id)_joint1
+        - $(arg arm_id)_joint2
+        - $(arg arm_id)_joint3
+        - $(arg arm_id)_joint4
+        - $(arg arm_id)_joint5
+        - $(arg arm_id)_joint6
+        - $(arg arm_id)_joint7
+
+    kp: [200, 200, 200, 10, 10, 10] # stiffness
+    kd: [28.2843, 28.2843, 28.2843, 6.32456, 6.32456, 6.32456] # dampening
+    kn: 0.5 # nullspace stiffness
+    dtau_max: 1000 # set to -1 to disable rotatum saturation
+    slew_rate: 0.005 # @ 1000 Hz

@@ -1,0 +1,8 @@
+<library path="lib/libfranka_controllers">
+	<class name="franka_controllers/JointPDGravityController" type="franka_controllers::JointPDGravityController" base_class_type="controller_interface::ControllerBase">
+		<description>Joint position PD controller with gravity compensation for the Franka robot.</description>
+	</class>
+	<class name="franka_controllers/CartesianPDNullspaceController" type="franka_controllers::CartesianPDNullspaceController" base_class_type="controller_interface::ControllerBase">
+		<description>Cartesian PD controller with nullspace stiffness for the Franka robot.</description>
+	</class>
+</library>

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="2">
+	<name>franka_controllers</name>
+	<version>1.0.0</version>
+	<description>ROS Control controllers for the Franka Panda robot</description>
+
+	<author email="victorstaven@protonmail.com">Victor Melbye Staven</author>
+	<author email="martinandrovich@gmail.com">Martin Androvich</author>
+	<author email="peter@qrholm.dk">Peter Ørholm Nielsen</author>
+	<maintainer email="victorstaven@protonmail.com">Victor Melbye Staven</maintainer>
+
+	<license>BSD</license>
+
+	<buildtool_depend>catkin</buildtool_depend>
+
+	<depend>roscpp</depend>
+	<depend>roslib</depend>
+	<depend>std_msgs</depend>
+	<depend>ros_utils</depend>
+	<depend>controller_manager</depend>
+	<depend>controller_interface</depend>
+	<depend>pluginlib</depend>
+	<depend>franka_hw</depend>
+
+	<export>
+		<controller_interface plugin="${prefix}/franka_controllers_plugin.xml" />
+	</export>
+
+</package>

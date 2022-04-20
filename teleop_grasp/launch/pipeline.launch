@@ -1,0 +1,50 @@
+<launch>
+
+	<!-- ARGUMENTS -->
+	<!-- see README.md for info -->
+
+	<arg name="cam_device"  doc="Name of the image capture device"       default="/dev/video0"/>
+
+	<arg name="sim"         doc="Lanch in simulation environment"        default="true"/>
+	<arg name="world"       doc="The Gazebo world to use"                default="workcell.world"/>
+	
+	<arg name="controller"  doc="Controller to use with ros_control"     default="force_example_controller"/>
+	<arg name="use_gripper" doc="Use the Franka gripper"                 default="true"/>
+	<arg name="rviz"        doc="Launch RVIZ"                            default="false"/>
+
+	<arg name="robot_ip"    doc="IP address of physical robot"           default=""/>
+
+	<!-- ################################################################################################################# -->
+
+	<!-- camera node -->
+	<node pkg="cv_camera" type="cv_camera_node" name="cv_camera_node">
+		<param name="device_path" value="$(arg cam_device)"/>
+		<param name="rate" value="30.0" />
+		<!-- <param name="frame_id" value="camera_video0" /> -->
+	</node>
+
+	<!-- grasp estimation -->
+	<!-- ... -->
+
+	<!-- arm pose estimation -->
+	<!-- ... -->
+
+	<!-- teleop_grasp (system) node -->
+	<rosparam file="$(find teleop_grasp)/config/teleop_grasp.yaml" />
+
+	<node pkg="teleop_grasp" type="teleoperation" name="teleoperation">
+	<!-- <node pkg="teleop_grasp" type="teleop_grasp" name="teleop_grasp"> -->
+		<!-- <param name="device_path" value="$(arg cam_device)" />
+		<param name="rate" value="30.0" />
+		<param name="frame_id" value="camera_video0" /> -->
+	</node>
+	
+
+	<!-- robot via franka_ros (hw/sim) -->
+	<include file="$(find teleop_grasp)/launch/robot.launch">
+		<arg name="sim" value="$(arg sim)"/>
+		<arg name="controller" value="$(arg controller)"/>
+		<arg name="use_gripper" value="$(arg use_gripper)"/>
+	</include>
+
+</launch>
