@@ -12,3 +12,7 @@ repositories:
   src/ros_utils:
     type: git
     url: git@github.com:martinandrovich/ros_utils.git
+
+  src/gesture_estimation:
+    type: git
+    url: git@github.com:teleop-grasp/gesture_estimation.git
