@@ -1,4 +1,5 @@
 teleop_grasp:
+    image_rgb_topic: "image_raw_rgb"
     pose_topic: "pose_estimate"
     grasp_topic: "grasp_estimate"
     cmd_topic: cmd_topic
