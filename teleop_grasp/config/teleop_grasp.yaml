@@ -1,4 +1,5 @@
 teleop_grasp:
-    pose_topic: "pose_estimate"
-    grasp_topic: "grasp_estimate"
-    cmd_topic: cmd_topic
+    topic_pose_hand: "pose_estimate"
+    topic_grasp_hand: "grasp_estimate"
+    topic_franka_state: "/franka_state_controller/franka_states"
+    topic_franka_pose_ee: "/franka_cartesian_impedance_controller/command"

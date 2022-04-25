@@ -277,7 +277,7 @@ Eigen::Isometry3d
 CartesianImpedanceController::filter_desired_pose(const Eigen::Isometry3d& T_ref)
 {
 	std::lock_guard lock(mtx_T_ref);
-;
+
 	auto [pos_ref, ori_ref] = std::tuple{ Eigen::Vector3d(T_ref.translation()), Eigen::Quaterniond(T_ref.rotation()) };
 	auto [pos_d, ori_d] = std::tuple{ Eigen::Vector3d(T_d.translation()), Eigen::Quaterniond(T_d.rotation()) };
 

@@ -16,7 +16,7 @@ main(int argc, char **argv)
 	// ------------------------------------------------------------------------------
 
 	// run test function
-	teleop_grasp::test_system();
+	// teleop_grasp::test_system();
 
 	// exit
 	return 0;

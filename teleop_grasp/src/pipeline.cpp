@@ -20,8 +20,8 @@ main(int argc, char **argv)
 	// teleop_grasp::get_img() etc. are wrappers of ROS interface to get images etc.
 	
 	// setup system
-	if (not teleop_grasp::init())
-		ROS_BREAK(); // or throw std::exception
+	// if (not teleop_grasp::init(&nh))
+	// 	ROS_BREAK(); // or throw std::exception
 
 	// main loop
 	ros::Rate rate(100); // Hz
