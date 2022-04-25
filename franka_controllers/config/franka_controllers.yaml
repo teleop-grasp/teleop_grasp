@@ -1,5 +1,5 @@
-franka_joint_position_pd_gravity_controller:
-    type: franka_controllers/JointPositionPDGravityController
+joint_pd_gravity_controller:
+    type: franka_controllers/JointPDGravityController
     state_publish_rate: 100
     arm_id: $(arg arm_id)
     joint_names:
@@ -12,12 +12,12 @@ franka_joint_position_pd_gravity_controller:
         - $(arg arm_id)_joint7
 
     q_d: [0, 0, 0, -1.57, 0, 1.57, 0.79]
-    kp: [200, 200, 200, 200, 200, 200, 200]
-    kd: [100, 100, 100, 100, 100, 100, 100]
+    kp: [800, 800, 800, 800, 800, 800, 800]
+    kd: [400, 400, 400, 400, 400, 400, 400]
     dtau_max: 1000 # set to -1 to disable rotatum saturation
 
-franka_cartesian_impedance_controller:
-    type: franka_controllers/CartesianImpedanceController
+cartesian_pd_nullspace_controller:
+    type: franka_controllers/CartesianPDNullspaceController
     state_publish_rate: 100
     arm_id: $(arg arm_id)
     joint_names:
@@ -29,10 +29,8 @@ franka_cartesian_impedance_controller:
         - $(arg arm_id)_joint6
         - $(arg arm_id)_joint7
 
-    kp: [200, 200, 200, 10, 10, 10] # dampening [[pos], [ori]]
-    kd: [28.2843, 28.2843, 28.2843, 6.32456, 6.32456, 6.32456] # stiffness [[pos], [ori]]
+    kp: [200, 200, 200, 10, 10, 10] # stiffness
+    kd: [28.2843, 28.2843, 28.2843, 6.32456, 6.32456, 6.32456] # dampening
     kn: 0.5 # nullspace stiffness
     dtau_max: 1000 # set to -1 to disable rotatum saturation
     slew_rate: 0.005 # @ 1000 Hz
-
-

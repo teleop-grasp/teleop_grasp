@@ -1,32 +1,17 @@
-#include <franka_controllers/cartesian_impedance_controller.h>
+#include <franka_controllers/cartesian_pd_nullspace_controller.h>
 
 #include <controller_interface/controller_base.h>
 #include <pluginlib/class_list_macros.hpp>
-
-// #include <ros_utils/ros.h>
 #include <ros_utils/eigen.h>
 
 // export controller
-PLUGINLIB_EXPORT_CLASS(franka_controllers::CartesianImpedanceController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(franka_controllers::CartesianPDNullspaceController, controller_interface::ControllerBase)
 
 namespace franka_controllers
 {
 
-Eigen::Matrix<double, 7, 1> saturateTorqueRate(
-    const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
-    const Eigen::Matrix<double, 7, 1>& tau_J_d) {  // NOLINT (readability-identifier-naming)
-    static double delta_tau_max_ = 1.0;
-  Eigen::Matrix<double, 7, 1> tau_d_saturated{};
-  for (size_t i = 0; i < 7; i++) {
-    double difference = tau_d_calculated[i] - tau_J_d[i];
-    tau_d_saturated[i] =
-        tau_J_d[i] + std::max(std::min(difference, delta_tau_max_), -delta_tau_max_);
-  }
-  return tau_d_saturated;
-}
-
 bool
-CartesianImpedanceController::init(hardware_interface::RobotHW *hw, ros::NodeHandle& nh)
+CartesianPDNullspaceController::init(hardware_interface::RobotHW *hw, ros::NodeHandle& nh)
 {
 
 	// read arm_id from config file
@@ -131,7 +116,7 @@ CartesianImpedanceController::init(hardware_interface::RobotHW *hw, ros::NodeHan
 		ROS_ERROR_STREAM(CONTROLLER_NAME << ": Could not read kd gain");
 		return false;
 	}
-	
+
 	// read kn gains from config
 	if (not nh.getParam("kn", kn))
 	{
@@ -157,7 +142,7 @@ CartesianImpedanceController::init(hardware_interface::RobotHW *hw, ros::NodeHan
 	sub_command = nh.subscribe<geometry_msgs::PoseStamped>(
 		"command", // topic name
 		20, // queue size
-		&CartesianImpedanceController::callback_command, // function pointer
+		&CartesianPDNullspaceController::callback_command, // function pointer
 		this,
 		ros::TransportHints().reliable().tcpNoDelay() // transport hints
 	);
@@ -175,10 +160,9 @@ CartesianImpedanceController::init(hardware_interface::RobotHW *hw, ros::NodeHan
 }
 
 void
-CartesianImpedanceController::starting(const ros::Time& time)
+CartesianPDNullspaceController::starting(const ros::Time& time)
 {
 	// set equilibrium point to current state
-	// T_d = T_ref = Eigen::Isometry3d::Identity();
 	T_d = T_ref = get_robot_state().T_e;
 
 	// set desired nullspace to initial robot state
@@ -186,9 +170,8 @@ CartesianImpedanceController::starting(const ros::Time& time)
 }
 
 void
-CartesianImpedanceController::update(const ros::Time& time, const ros::Duration& period)
+CartesianPDNullspaceController::update(const ros::Time& time, const ros::Duration& period)
 {
-
 	// elapsed time
 	static ros::Duration elapsed_time = ros::Duration(0.);
 	elapsed_time += period;
@@ -196,26 +179,27 @@ CartesianImpedanceController::update(const ros::Time& time, const ros::Duration&
 	// read robot state and dynamics
 	const auto [T_e, q, dq] = get_robot_state();
 	const auto [J, M, C, g] = get_robot_dynamics();
-
-	// computations
-	// const auto dx_e = J * dq; // end-effector velocity
-	// const auto I7d = Eigen::Matrix7d::Identity();
+	const auto dx_e = J * dq;
 
 	// compute errors (in base frame)
-	const auto x_de = get_pose_error(T_e, T_d);
+	const auto x_de = get_pose_error(T_e, T_d); // [p_de, eps_de]
+	const auto dx_de = Eigen::Vector6d::Zero() - dx_e; // no desired velocity
 
 	// cartesian torque
-	// u = g(q) + J(q)' * Kp * x_de - J(q)' * Kd * J(q) * dq
-	Eigen::Vector7d tau_task = J.transpose() * (-kp * x_de - kd * (J * dq));
-	// Eigen::Vector7d tau_d = J.transpose() * kp * x_de - J.transpose() * kd * J * dq + g;
-	// tau_d = tau_task + C;
-	
+	const auto tau_task = J.transpose() * (kp * x_de + kd * dx_de);
+
+	// const auto M_xe = (J * M.inverse() * J.transpose()).inverse();
+	// Eigen::Vector7d u = J.transpose() * M_xe * (kp * x_de + kd * dx_de) + g;
+
 	// nullspace torque
+	// https://studywolf.wordpress.com/2013/09/17/robot-control-5-controlling-in-the-null-space/
 	const auto J_T_pinv = Eigen::pseudo_inverse(J.transpose(), 0.2); // damped pseudo inverse
-	Eigen::Vector7d tau_nullspace = (Eigen::Matrix7d::Identity() - J.transpose() * J_T_pinv) * (kn * (qN_d - q) - (2.0 * sqrt(kn)) * dq);
-	
+	const auto I7x7d = Eigen::Matrix7d::Identity();
+	const auto kc = 2.0 * sqrt(kn); // damping ratio of 1.0
+	const auto tau_null = (I7x7d - J.transpose() * J_T_pinv) * (kn * (qN_d - q) - kc * dq);
+
 	// desired joint torque
-	Eigen::Vector7d tau_d = tau_task + tau_nullspace + C;
+	Eigen::Vector7d tau_d = tau_task + tau_null + C;
 
 	// saturate rate-of-effort (rotatum)
 	if (dtau_max > 0)
@@ -229,8 +213,8 @@ CartesianImpedanceController::update(const ros::Time& time, const ros::Duration&
 	T_d = filter_desired_pose(T_ref);
 }
 
-CartesianImpedanceController::RobotState
-CartesianImpedanceController::get_robot_state()
+CartesianPDNullspaceController::RobotState
+CartesianPDNullspaceController::get_robot_state()
 {
 	const auto robot_state = state_handle->getRobotState();
 	return
@@ -242,8 +226,8 @@ CartesianImpedanceController::get_robot_state()
 }
 
 
-CartesianImpedanceController::RobotDynamics
-CartesianImpedanceController::get_robot_dynamics()
+CartesianPDNullspaceController::RobotDynamics
+CartesianPDNullspaceController::get_robot_dynamics()
 {
 	return
 	{
@@ -255,7 +239,7 @@ CartesianImpedanceController::get_robot_dynamics()
 }
 
 Eigen::Vector7d
-CartesianImpedanceController::saturate_rotatum(const Eigen::Vector7d& tau_d, const double dt)
+CartesianPDNullspaceController::saturate_rotatum(const Eigen::Vector7d& tau_d, const double dt)
 {
 	// previous desired torque and saturated torque
 	static Eigen::Vector7d tau_d_prev = Eigen::Vector7d::Zero();
@@ -274,7 +258,7 @@ CartesianImpedanceController::saturate_rotatum(const Eigen::Vector7d& tau_d, con
 }
 
 Eigen::Isometry3d
-CartesianImpedanceController::filter_desired_pose(const Eigen::Isometry3d& T_ref)
+CartesianPDNullspaceController::filter_desired_pose(const Eigen::Isometry3d& T_ref)
 {
 	std::lock_guard lock(mtx_T_ref);
 
@@ -288,42 +272,34 @@ CartesianImpedanceController::filter_desired_pose(const Eigen::Isometry3d& T_ref
 }
 
 Eigen::Vector6d
-CartesianImpedanceController::get_pose_error(const Eigen::Isometry3d& T_e, const Eigen::Isometry3d& T_d)
+CartesianPDNullspaceController::get_pose_error(const Eigen::Isometry3d& T_e, const Eigen::Isometry3d& T_d)
 {
 	const auto [pos_e, pos_d] = std::tuple{ T_e.translation(), T_d.translation() };
 	const auto [R_e, R_d] = std::tuple{ T_e.rotation(), T_d.rotation() };
-
-	auto quat_e = Eigen::Quaterniond(R_e);
-	auto quat_d = Eigen::Quaterniond(R_d);
+	// const auto [quat_e, quat_d] = std::tuple{ Eigen::Quaterniond(R_e), Eigen::Quaterniond(R_d) };
 
 	// position error
-	const auto pos_de = pos_e - pos_d;
+	const auto pos_de = pos_d - pos_e;
 
-	// orientation error
-	// R12 = R01' * R02 = R10 * R02
-	// R_ed = R0e' * R0d = Re0 * R0d
-	auto R_ed = R_e.transpose() * R_d;
-	auto quat_ed = Eigen::Quaterniond(R_ed);
-	
-	// ROS_WARN_STREAM("dot: " << (quat_ed.coeffs().dot(quat_e.coeffs()) < 0.0) );
-	quat_ed.coeffs() = -quat_ed.coeffs();
-	// ROS_WARN_STREAM("dot: " << (quat_ed.coeffs().dot(quat_e.coeffs()) < 0.0) );
+	// orinetation error
 
-	auto eps_e_de = quat_ed.vec();
-	auto eps_0_de = R_e * eps_e_de; // to base frame
+	// from (11), (27) in "The Role of Euler Parameters in Robot Control"
+	// R_12 = R_01' * R_02 = R_10 * R_02
+	// R_12 = (eta_21, eps_1_21) = (eta_21, eps_2_21)
 
-	// auto quat_de = quat_e.inverse() * quat_d;
-	// auto ori_de = -R_e * quat_de.vec(); // to base frame
+	const auto R_ed = R_e.transpose() * R_d;
+	const auto eps_e_de = Eigen::Quaterniond(R_ed).vec();
+	const auto eps_de = R_e * eps_e_de; // to base frame
 
-	// vector
+	// error vector
 	Eigen::Vector6d x_de;
-	x_de << pos_de, eps_0_de;
+	x_de << pos_de, eps_de;
 
 	return x_de;
 }
 
 void
-CartesianImpedanceController::callback_command(const geometry_msgs::PoseStampedConstPtr& msg)
+CartesianPDNullspaceController::callback_command(const geometry_msgs::PoseStampedConstPtr& msg)
 {
 	// read new transformation
 	std::lock_guard lock(mtx_T_ref);

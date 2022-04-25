@@ -1,4 +1,4 @@
-#include <franka_controllers/joint_position_pd_gravity_controller.h>
+#include <franka_controllers/joint_pd_gravity_controller.h>
 
 #include <controller_interface/controller_base.h>
 #include <pluginlib/class_list_macros.hpp>
@@ -6,13 +6,13 @@
 // #include <ros_utils/ros.h>
 
 // export controller
-PLUGINLIB_EXPORT_CLASS(franka_controllers::JointPositionPDGravityController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(franka_controllers::JointPDGravityController, controller_interface::ControllerBase)
 
 namespace franka_controllers
 {
 
 bool
-JointPositionPDGravityController::init(hardware_interface::RobotHW *hw, ros::NodeHandle& nh)
+JointPDGravityController::init(hardware_interface::RobotHW *hw, ros::NodeHandle& nh)
 {
 
 	// read arm_id from config file
@@ -137,7 +137,7 @@ JointPositionPDGravityController::init(hardware_interface::RobotHW *hw, ros::Nod
 	}
 
 	// subscribe to command topic
-	sub_command = nh.subscribe<std_msgs::Float64MultiArray>("command", 1,& JointPositionPDGravityController::callback_command, this);
+	sub_command = nh.subscribe<std_msgs::Float64MultiArray>("command", 1,& JointPDGravityController::callback_command, this);
 
 	// init complete
 	ROS_WARN_STREAM("Initialized " << CONTROLLER_NAME << " with:\n\n"
@@ -151,7 +151,7 @@ JointPositionPDGravityController::init(hardware_interface::RobotHW *hw, ros::Nod
 }
 
 void
-JointPositionPDGravityController::starting(const ros::Time& time)
+JointPDGravityController::starting(const ros::Time& time)
 {
 	// initial desired position
 	std::vector<double> q_d_array(q_d.data(), q_d.data() + q_d.size()); // convert Eigen to std::vector
@@ -159,7 +159,7 @@ JointPositionPDGravityController::starting(const ros::Time& time)
 }
 
 void
-JointPositionPDGravityController::update(const ros::Time& time, const ros::Duration& period)
+JointPDGravityController::update(const ros::Time& time, const ros::Duration& period)
 {
 	// elapsed time
 	static ros::Duration elapsed_time = ros::Duration(0.);
@@ -189,28 +189,28 @@ JointPositionPDGravityController::update(const ros::Time& time, const ros::Durat
 }
 
 Eigen::Vector7d
-JointPositionPDGravityController::get_position()
+JointPDGravityController::get_position()
 {
 	auto q_array = state_handle->getRobotState().q;
 	return Eigen::Vector7d(q_array.data());
 }
 
 Eigen::Vector7d
-JointPositionPDGravityController::get_velocity()
+JointPDGravityController::get_velocity()
 {
 	auto dq_array = state_handle->getRobotState().dq;
 	return Eigen::Vector7d(dq_array.data());
 }
 
 Eigen::Vector7d
-JointPositionPDGravityController::get_gravity()
+JointPDGravityController::get_gravity()
 {
 	auto g_array = model_handle->getGravity();
 	return Eigen::Vector7d(g_array.data());
 }
 
 Eigen::Vector7d
-JointPositionPDGravityController::saturate_rotatum(const Eigen::Vector7d& tau_d, const double dt)
+JointPDGravityController::saturate_rotatum(const Eigen::Vector7d& tau_d, const double dt)
 {
 	// previous desired torque and saturated torque
 	static Eigen::Vector7d tau_d_prev = Eigen::Vector7d::Zero();
@@ -229,7 +229,7 @@ JointPositionPDGravityController::saturate_rotatum(const Eigen::Vector7d& tau_d,
 }
 
 void
-JointPositionPDGravityController::callback_command(const std_msgs::Float64MultiArrayConstPtr& msg)
+JointPDGravityController::callback_command(const std_msgs::Float64MultiArrayConstPtr& msg)
 {
 	// check size
 	if (msg->data.size() != num_joints)

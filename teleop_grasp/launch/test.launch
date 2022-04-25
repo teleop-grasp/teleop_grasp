@@ -1,0 +1,23 @@
+
+<launch>
+    <arg name="cam_device"  doc="Name of the image capture device"       default="/dev/video0"/>
+    <arg name="grasp_state" default="hand_gesture/grasp_state" />
+    <arg name="image_raw" default="/cv_camera/image_raw" />
+    
+    
+    <!-- camera node -->
+	<node pkg="cv_camera" type="cv_camera_node" name="cv_camera">
+		<param name="device_path" value="$(arg cam_device)"/>
+		<param name="rate" value="30.0" />
+		<!-- <param name="frame_id" value="camera_video0" /> -->
+	</node>
+
+    <!-- gesture estimation node -->
+    <node pkg="gesture_estimation" type="hand_gesture.py" name="hand_gesture" output="screen">
+            <param name="topic_grasp_state" value="$(arg grasp_state)"/>
+            <param name="topic_image_raw" value="$(arg image_raw)" />
+            <!-- <param name="frame_id" value="camera_video0" /> -->
+    </node>
+
+
+</launch>

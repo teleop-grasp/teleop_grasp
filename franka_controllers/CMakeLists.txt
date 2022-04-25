@@ -57,9 +57,9 @@ include_directories(
 
 ## franka_controller
 add_library(franka_controllers
-		# src/lib_franka_controllers.cpp # interface
-		src/joint_position_pd_gravity_controller.cpp
-		src/cartesian_impedance_controller.cpp
+		# src/franka_controllers.cpp # interface
+		src/joint_pd_gravity_controller.cpp
+		src/cartesian_pd_nullspace_controller.cpp
 )
 target_link_libraries(franka_controllers ${catkin_LIBRARIES})
 

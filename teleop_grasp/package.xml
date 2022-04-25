@@ -29,6 +29,7 @@
 	<depend>cv_camera</depend>
 	<depend>franka_controllers</depend>
 	<depend>franka_gripper</depend>
+	<depend>gesture_estimation</depend>
 	
 	<export>
 		<!-- https://github.com/sloretz/gazebo_model_path_example -->

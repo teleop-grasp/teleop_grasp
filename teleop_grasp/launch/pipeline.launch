@@ -26,7 +26,12 @@
 	</node>
 
 	<!-- grasp estimation -->
-	<!-- ... -->
+
+	<node pkg="gesture_estimation" type="hand_gesture.py" name="hand_gesture">
+		<!-- <param name="device_path" value="$(arg cam_device)"/>
+		<param name="rate" value="30.0" /> -->
+		<!-- <param name="frame_id" value="camera_video0" /> -->
+	</node>
 
 	<!-- arm pose estimation -->
 	<!-- ... -->
