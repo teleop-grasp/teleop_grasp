@@ -56,7 +56,7 @@ rosdep install --from-paths src --ignore-src -r -y
 
 # custom dependecies
 echo -e  "\n\e[104mInstalling custom dependencies...\e[49m\n" && sleep 1
-python3 -m pip install $WS_PATH/src/gesture_estimation/requirements.txt
+python3 -m pip install -r $WS_PATH/src/gesture_estimation/requirements.txt
 
 # build the workspace
 echo -e  "\n\e[104mBuilding workspace...\e[49m\n" && sleep 1
