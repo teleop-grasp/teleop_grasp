@@ -83,7 +83,6 @@ teleop_grasp::get_franka_pose_ee_topic()
 {
 	static ros::NodeHandle nh;
 	std::string topic_franka_pose_ee = "";
-	ROS_WARN_STREAM("get_franka_pose_ee_topic...");
 	if (not ros::param::get("/teleop_grasp/topic_franka_pose_ee", topic_franka_pose_ee)) 
 	{
 		ROS_ERROR_STREAM("Could not read parameter topic_franka_pose_ee");
@@ -119,9 +118,7 @@ teleop_grasp::set_pose_robot(geometry_msgs::Pose pose)
 void
 teleop_grasp::set_gripper(teleop_grasp::GripperState open_or_close)
 {
-	actionlib::SimpleActionClient<franka_gripper::GraspAction> action("/franka_gripper/grasp", true);
-	
-	ROS_WARN("Waiting for action server to start..."); 
+	actionlib::SimpleActionClient<franka_gripper::GraspAction> action(get_grasp_topic(), true);
 
 	bool success = action.isServerConnected();
 
@@ -129,8 +126,6 @@ teleop_grasp::set_gripper(teleop_grasp::GripperState open_or_close)
 		ROS_WARN("Connected successfully!...");
 
 	action.waitForServer();
-
-	ROS_WARN("Action server started, sending goal...");
 
 	franka_gripper::GraspAction msg;
 
@@ -146,4 +141,19 @@ teleop_grasp::set_gripper(teleop_grasp::GripperState open_or_close)
 		msg.action_goal.goal.width = 0.01;
 		action.sendGoal(msg.action_goal.goal);
 	}
+}
+
+geometry_msgs::Pose
+teleop_grasp::predictor::predict_pose_linear(geometry_msgs::Pose current_pose)
+{
+	// computes the velocity vector in current position from previous position
+	auto d_pose = geometry_msgs::sub_poses(current_pose, teleop_grasp::pose_hand);
+
+	d_pose.position.x *= 2;
+	d_pose.position.y *= 2;
+	d_pose.position.z *= 2;
+
+	auto pose_ee_des = geometry_msgs::add_poses( teleop_grasp::pose_ee, d_pose );
+
+	return pose_ee_des;
 }

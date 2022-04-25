@@ -8,6 +8,7 @@
 #include "ros/node_handle.h"
 #include "std_msgs/Bool.h"
 #include "tf2/LinearMath/Quaternion.h"
+#include <array>
 #include <franka_gripper/franka_gripper.h>
 #include <libavcodec/avcodec.h>
 #include <ros/subscriber.h>
@@ -32,6 +33,8 @@ namespace teleop_grasp
 
 	inline geometry_msgs::Pose pose_d;
 
+	inline std::array<geometry_msgs::Pose, 3> poses_prev;
+
 	void
 	calibrate();
 
@@ -50,11 +53,23 @@ namespace teleop_grasp
 	geometry_msgs::Pose
 	compute_desired_ee_pose(geometry_msgs::Pose pose_hand);
 
+	geometry_msgs::Pose
+	predict_pose(geometry_msgs::Pose current_pose);
+
 	void
 	set_pose_robot(geometry_msgs::Pose msg);
 
 	void 
 	set_gripper(teleop_grasp::GripperState open_or_close);
+
+
+	namespace predictor
+	{
+		geometry_msgs::Pose
+		predict_pose_linear(geometry_msgs::Pose current_pose);
+	}
+
+
 }
 
 

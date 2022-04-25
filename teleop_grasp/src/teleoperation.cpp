@@ -43,11 +43,19 @@ main(int argc, char** argv)
 
 	while (ros::ok()) 
 	{
+		// open and close gripper
 		auto gripper_state = (teleop_grasp::gesture_state) ? teleop_grasp::GripperState::OPEN : teleop_grasp::GripperState::CLOSE;
 		teleop_grasp::set_gripper(gripper_state);
 
+		// predict the next position of hand
+		auto pose_ee_pred = teleop_grasp::predictor::predict_pose_linear(teleop_grasp::pose_ee);
+
+		// compute the new position based on relative difference between hand poses
 		teleop_grasp::pose_ee_des = teleop_grasp::compute_desired_ee_pose( teleop_grasp::pose_hand );
+
+		// send pose to franka | choose between predicted pose, and desired pose
 		teleop_grasp::set_pose_robot(teleop_grasp::pose_ee_des);
+
 		ros::spinOnce();
 		rate.sleep();
 	}
