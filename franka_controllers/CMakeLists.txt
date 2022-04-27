@@ -55,11 +55,12 @@ include_directories(
 # libraries
 # REMEMBER TO ADD TO INSTALL TARGETS (bottom of file) !!!
 
-## franka_controller
+## franka_controllers
 add_library(franka_controllers
 		# src/franka_controllers.cpp # interface
 		src/joint_pd_gravity_controller.cpp
 		src/cartesian_pd_nullspace_controller.cpp
+		src/cartesian_admittance_controller.cpp
 )
 target_link_libraries(franka_controllers ${catkin_LIBRARIES})
 
@@ -93,4 +94,3 @@ install(
 
 ## install ros_control plugin
 install(FILES franka_controllers_plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-
