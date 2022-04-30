@@ -13,13 +13,45 @@ find_package(
 	COMPONENTS
 		roscpp
 		roslib
-		std_msgs
 		ros_utils
 		controller_manager
 		controller_interface
 		pluginlib
+		realtime_tools
 		franka_hw
+		# plotjuggler
+		eigen_conversions
+		std_msgs
+		geometry_msgs
+		message_generation
+		message_runtime
 )
+
+# include directories
+include_directories(
+	include
+	${catkin_INCLUDE_DIRS}
+	${EIGEN3_INCLUDE_DIRS}
+)
+
+################################################################################################
+
+# messages and services
+
+add_message_files(
+	FILES
+		CartesianAdmittanceControllerDebug.msg
+)
+
+generate_messages(
+	DEPENDENCIES
+		std_msgs
+		geometry_msgs
+)
+
+################################################################################################
+
+# define catkin package
 
 catkin_package(
 	INCLUDE_DIRS
@@ -30,24 +62,20 @@ catkin_package(
 	CATKIN_DEPENDS
 		roscpp
 		roslib
-		std_msgs
 		ros_utils
 		controller_manager
 		controller_interface
 		pluginlib
+		realtime_tools
 		franka_hw
+		plotjuggler
+		eigen_conversions
+		std_msgs
+		geometry_msgs
+		message_generation
+		message_runtime
 	DEPENDS
 		EIGEN3
-)
-
-# find_package: CATKIN_DEPENDS: franka_ws -> ${catkin_INCLUDE_DIRS} & ${catkin_LIBRARIES}
-# catkin_package: generates catkin build files for "catkin build"
-# 
-# include directories
-include_directories(
-	include
-	${catkin_INCLUDE_DIRS}
-	${EIGEN3_INCLUDE_DIRS}
 )
 
 ################################################################################################
