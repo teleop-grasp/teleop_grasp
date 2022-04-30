@@ -10,7 +10,8 @@
 	<arg name="controller"  doc="Controller to use with ros_control"     default="cartesian_pd_nullspace_controller"/>
 	<arg name="use_gripper" doc="Use the Franka gripper"                 default="true"/>
 	<arg name="rviz"        doc="Launch RVIZ"                            default="false"/>
-	<arg name="rviz_marker" doc="Launch RVIZ with interactive marker."   default="$(arg rviz)"/>
+	<arg name="rviz_marker" doc="Launch RVIZ with interactive marker"    default="$(arg rviz)"/>
+	<arg name="plotjuggler" doc="Launch PlotJuggler"                     default="false"/>
 
 	<arg name="robot_ip"    doc="IP address of physical robot"           default=""/>
 
@@ -19,6 +20,9 @@
 	<!-- load controller configurations -->
 	<rosparam file="$(find franka_gazebo)/config/sim_controllers.yaml" subst_value="true" />
 	<rosparam file="$(find franka_controllers)/config/franka_controllers.yaml" subst_value="true" />
+	
+	<!-- plotjuggler -->
+	<node if="$(arg plotjuggler)" name="plotjuggler" pkg="plotjuggler" type="plotjuggler" args="--layout $(find teleop_grasp)/config/plotjuggler_layout.xml" />
 
 	<!-- simulation -->
 	<group if="$(arg sim)">
@@ -48,10 +52,10 @@
 		</include>
 
 		<node pkg="controller_manager"
-		      type="spawner"
-		      name="controller_spawner"
-		      respawn="false" output="screen"
-		      args="$(arg controller)"
+			  type="spawner"
+			  name="controller_spawner"
+			  respawn="false" output="screen"
+			  args="$(arg controller)"
 		/>
 
 		<node if="$(arg rviz)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_example_controllers)/launch/robot.rviz"/>

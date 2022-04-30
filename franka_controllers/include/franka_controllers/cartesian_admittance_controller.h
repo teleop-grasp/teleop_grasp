@@ -2,18 +2,20 @@
 
 #include <vector>
 #include <mutex>
+#include <thread>
 #include <Eigen/Eigen>
 
 #include <ros/ros.h>
 #include <controller_interface/multi_interface_controller.h>
 #include <pluginlib/class_list_macros.h>
-#include <realtime_tools/realtime_buffer.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <franka_hw/franka_model_interface.h>
 #include <franka_hw/franka_state_interface.h>
-#include <std_msgs/Float64MultiArray.h>
+#include <realtime_tools/realtime_buffer.h>
+
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <franka_controllers/CartesianAdmittanceControllerDebug.h>
 
 namespace Eigen
 {
@@ -48,28 +50,13 @@ namespace franka_controllers
 
 	private:
 
-		std::string                                   arm_id;
-		size_t                                        num_joints;
-		std::vector<std::string>                      joint_names;
-		std::vector<hardware_interface::JointHandle>  joint_handles;
-		std::unique_ptr<franka_hw::FrankaModelHandle> model_handle;
-		std::unique_ptr<franka_hw::FrankaStateHandle> state_handle;
-
-		std::mutex                                    mtx_T_ref;
-		Eigen::Isometry3d                             T_d, T_ref;
-		Eigen::Vector7d                               qN_d;
-
-		Eigen::Matrix6d                               kp, kd;
-		Eigen::Matrix3d                               Kp, Ko, Dp, Do, Mp, Mo;
-		double                                        kpp, kpo, kvp, kvo, kn, kc;
-		double                                        dtau_max;
-		double                                        slew_rate;
-
-		ros::Subscriber                               sub_command;
+		using Pose = std::tuple<Eigen::Vector3d, Eigen::Matrix3d>; // (p, R)
+		using Frame = std::tuple<Eigen::Vector3d, Eigen::Matrix3d, Eigen::Vector3d, Eigen::Vector3d, Eigen::Vector3d, Eigen::Vector3d>; // (p, R, dp, w, ddp, dw)
 
 		struct RobotState
 		{
-			Eigen::Isometry3d T_e;
+			Eigen::Vector3d p_e;
+			Eigen::Matrix3d R_e;
 			Eigen::Vector7d q;
 			Eigen::Vector7d dq;
 			Eigen::Vector6d h_e;
@@ -84,17 +71,59 @@ namespace franka_controllers
 			Eigen::Vector7d g;
 		};
 
-		std::tuple<Eigen::Vector6d, Eigen::Vector6d, Eigen::Vector6d>
-		get_desired(const Eigen::Isometry3d& T_ref);
+		std::string                                   arm_id;
+		size_t                                        num_joints;
+		std::vector<std::string>                      joint_names;
+		std::vector<hardware_interface::JointHandle>  joint_handles;
+		std::unique_ptr<franka_hw::FrankaModelHandle> model_handle;
+		std::unique_ptr<franka_hw::FrankaStateHandle> state_handle;
+
+		realtime_tools::RealtimeBuffer<Pose>          buffer_pose_ref;
+		Pose                                          pose_d;
+		Eigen::Vector7d                               qN_d;
+
+		Eigen::Matrix6d                               kp, kd;
+		Eigen::Matrix3d                               Kp, Ko, Dp, Do, Mp, Mo;
+		double                                        kpp, kpo, kvp, kvo, kn, kc;
+		double                                        dtau_max;
+		double                                        slew_rate;
+
+		ros::Subscriber                               sub_command;
+
+		std::mutex mtx_msg_debug;
+		ros::Publisher pub_msg_debug;
+		std::thread thread_msg_debug;
+		franka_controllers::CartesianAdmittanceControllerDebug msg_debug;
+
+		Frame
+		get_desired(const Eigen::Vector3d& p_ref, const Eigen::Matrix3d& R_ref);
 
 		RobotState
 		get_robot_state();
 
 		RobotDynamics
-		get_robot_dynamics(const Eigen::Vector7d& q, const Eigen::Vector7d& dq, double dt);
-		
-		std::tuple<Eigen::Vector6d, Eigen::Vector6d, Eigen::Vector6d>
-		spatial_impedance(const Eigen::Vector6d& x_d, const Eigen::Vector6d& dx_d, const Eigen::Vector6d& ddx_d, const Eigen::Vector6d& h_e, double dt);
+		get_robot_dynamics(const Eigen::Vector7d& q, const Eigen::Vector7d& dq, double dt = 0.001);
+
+		Frame
+		spatial_impedance(
+			const Eigen::Vector3d& p_d,
+			const Eigen::Matrix3d& R_d,
+			const Eigen::Vector3d& dp_d,
+			const Eigen::Vector3d& w_d,
+			const Eigen::Vector3d& ddp_d,
+			const Eigen::Vector3d& dw_d,
+			const Eigen::Vector6d& h_e,
+			double dt = 0.001
+		);
+
+		Eigen::Vector6d
+		pos_ori_control(
+			const Eigen::Vector6d& x_c,
+			const Eigen::Vector6d& dx_c,
+			const Eigen::Vector6d& ddx_c,
+			const Eigen::Vector6d& x_e,
+			const Eigen::Vector6d& dx_e
+		);
 
 		Eigen::Vector6d
 		get_pose_error(const Eigen::Isometry3d& T_e, const Eigen::Isometry3d& T_d);

@@ -34,7 +34,7 @@ cartesian_pd_nullspace_controller:
     kn: 0.5 # nullspace stiffness
     dtau_max: 1000 # set to -1 to disable rotatum saturation
     slew_rate: 0.005 # @ 1000 Hz
-    
+
 cartesian_admittance_controller:
     type: franka_controllers/CartesianAdmittanceController
     state_publish_rate: 100
@@ -48,8 +48,22 @@ cartesian_admittance_controller:
         - $(arg arm_id)_joint6
         - $(arg arm_id)_joint7
 
-    kp: [200, 200, 200, 10, 10, 10] # stiffness
-    kd: [28.2843, 28.2843, 28.2843, 6.32456, 6.32456, 6.32456] # dampening
+    kp: [200, 200, 200, 100, 100, 100] # stiffness
+    kd: [30, 30, 30, 15, 15, 15] # dampening
+
+    Kp: [200, 200, 200]
+    Ko: [10, 10, 10]
+    Dp: [30, 30, 30]
+    Do: [7, 7, 7]
+    Mp: [1, 1, 1]
+    Mo: [1, 1, 1]
+
+    kpp: 200
+    kpo: 10
+    kvp: 30
+    kvo: 7
     kn: 0.5 # nullspace stiffness
+    kc: 1 # 2 * sqrt(kn)
+
     dtau_max: 1000 # set to -1 to disable rotatum saturation
     slew_rate: 0.005 # @ 1000 Hz
