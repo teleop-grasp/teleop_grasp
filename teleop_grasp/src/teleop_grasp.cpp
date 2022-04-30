@@ -1,125 +1,101 @@
-#include "actionlib/client/client_helpers.h"
-#include "actionlib/client/simple_action_client.h"
-#include "franka/gripper.h"
-#include "franka_gripper/GraspAction.h"
-#include "franka_gripper/HomingAction.h"
-#include "franka_gripper/MoveAction.h"
-#include "franka_gripper/MoveActionGoal.h"
-#include "franka_gripper/MoveGoal.h"
-#include "franka_msgs/FrankaState.h"
-#include "geometry_msgs/Pose.h"
-#include "geometry_msgs/PoseStamped.h"
-#include "ros/duration.h"
-#include "ros/node_handle.h"
-#include "ros/publisher.h"
-#include "ros/time.h"
-#include "ros/topic.h"
-#include "ros_utils/geometry_msgs.h"
-#include <boost/regex/v4/syntax_type.hpp>
-#include <cstddef>
-#include <ctime>
-#include <string>
+// #include "Eigen/src/Core/Matrix.h"
+// #include "Eigen/src/Geometry/Transform.h"
+// #include "Eigen/src/IterativeLinearSolvers/BasicPreconditioners.h"
+// #include "geometry_msgs/Pose.h"
+// #include "ros_utils/eigen.h"
+// #include "ros_utils/geometry_msgs.h"
 #include <teleop_grasp/teleop_grasp.h>
-#include <ros/ros.h>
 
 void 
 teleop_grasp::calibrate()
 {
+
 	static ros::NodeHandle nh;
 
-	// get robot TCP pose
-	auto franka_state     = *(ros::topic::waitForMessage<franka_msgs::FrankaState>(get_franka_state_topic(),nh));
+	// get robot ee pose
+	auto franka_state     = *(ros::topic::waitForMessage<franka_msgs::FrankaState>(teleop_grasp::get_topic("/teleop_grasp/topic_franka_state"),nh));
+	// teleop_grasp::pose_ee = Eigen::Isometry3d(Eigen::Matrix4d::Map(franka_state.O_T_EE.data()));
 	teleop_grasp::pose_ee = geometry_msgs::make_pose(Eigen::Isometry3d(Eigen::Matrix4d::Map(franka_state.O_T_EE.data())));
 
 	// get hand pose
-	// teleop_grasp::pose_hand = *(ros::topic::waitForMessage<geometry_msgs::Pose>(get_pose_topic(),nh));
+	teleop_grasp::pose_hand = *(ros::topic::waitForMessage<geometry_msgs::Pose>(teleop_grasp::get_topic("/teleop_grasp/topic_pose_hand"),nh));
 	teleop_grasp::pose_hand_prev = teleop_grasp::pose_hand;
+
+	// get current position of robot ee and orientation of hand, then send to robot
+	auto t = Eigen::make_tf(pose_ee).translation();
+	auto R = Eigen::make_tf(teleop_grasp::pose_hand).rotation();
+
+	Eigen::Matrix4d cali_pose;
+	cali_pose.setIdentity();
+	cali_pose.block<3,3>(0,0) = R;
+	cali_pose.block<3,1>(0,3) = t;
+
+	command_pose_robot( geometry_msgs::make_pose( Eigen::Isometry3d(cali_pose) ) );
 
 	// calibration completed
 	ROS_INFO_STREAM("calibration has been completed with:\n\trobot init tcp pose: " << teleop_grasp::pose_ee << "\n\thand init pose: " << teleop_grasp::pose_hand);
 }
 
 std::string
-teleop_grasp::get_grasp_topic()
+teleop_grasp::get_topic(const std::string& topic)
 {
-	static ros::NodeHandle nh;
-	std::string grasp = "";
-	if (not ros::param::get("/teleop_grasp/topic_grasp_hand", grasp)) 
+	std::string topic_out = "";
+	if (not ros::param::get(topic, topic_out)) 
 	{
-		ROS_ERROR_STREAM("Could not read parameter grasp");
-		return grasp;
+		ROS_ERROR_STREAM("Could not read parameter " << topic);
+		return topic_out;
 	}
-	return grasp;
-}
-
-std::string 
-teleop_grasp::get_pose_topic()
-{
-	static ros::NodeHandle nh;
-	std::string pose = "";
-	if (not ros::param::get("/teleop_grasp/topic_pose_hand", pose)) 
-	{
-		ROS_ERROR_STREAM("Could not read parameter pose");
-		return pose;
-	}
-	return pose;
-}
-
-std::string 
-teleop_grasp::get_franka_state_topic()
-{
-	static ros::NodeHandle nh;
-	std::string topic_franka_state = "";
-	if (not ros::param::get("/teleop_grasp/topic_franka_state", topic_franka_state)) 
-	{
-		ROS_ERROR_STREAM("Could not read parameter topic_franka_state");
-		return topic_franka_state;
-	}
-	return topic_franka_state;
-}
-
-std::string
-teleop_grasp::get_franka_pose_ee_topic()
-{
-	static ros::NodeHandle nh;
-	std::string topic_franka_pose_ee = "";
-	if (not ros::param::get("/teleop_grasp/topic_franka_pose_ee", topic_franka_pose_ee)) 
-	{
-		ROS_ERROR_STREAM("Could not read parameter topic_franka_pose_ee");
-		return topic_franka_pose_ee;
-	}
-	return topic_franka_pose_ee;	
+	return topic_out;
 }
 
 geometry_msgs::Pose
-teleop_grasp::compute_desired_ee_pose(geometry_msgs::Pose pose_hand)
+teleop_grasp::compute_desired_ee_pose(const geometry_msgs::Pose& pose_hand)
 {
-	auto d_pose = geometry_msgs::sub_poses(pose_hand, teleop_grasp::pose_hand_prev);
+	// convert to transformation matrix
+	auto pose_hand_tf = Eigen::make_tf(pose_hand);
 
-	auto pose_ee_des = geometry_msgs::add_poses( teleop_grasp::pose_ee, d_pose );
+	// compute diff transform from prev hand pose to current hand pose
+	auto d_pose_tf = Eigen::make_tf(teleop_grasp::pose_hand_prev).inverse() * pose_hand_tf;
 
-	return pose_ee_des;
+	// if the velocity becomes too large
+	if (  d_pose_tf.translation().squaredNorm() > teleop_grasp::MAX_LIN_VELOCITY and 
+		  d_pose_tf.rotation().w() > teleop_grasp::MAX_ANG_VELOCITY )
+		d_pose_tf = Eigen::Isometry3d::Identity();
+
+	// if no changes are made to the pose, this is caused by the hand moving outside the camera's view
+	if (  d_pose_tf.translation().squaredNorm() < teleop_grasp::CHANGE_THRESHOLD and
+		  d_pose_tf.rotation().w() < teleop_grasp::CHANGE_THRESHOLD)
+		d_pose_tf = Eigen::Isometry3d::Identity();
+
+	// update prev hand pose
+	teleop_grasp::pose_hand_prev = teleop_grasp::pose_hand; // obs prev write 
+
+	// compute new desired ee pose
+	teleop_grasp::pose_ee_des = geometry_msgs::make_pose( Eigen::make_tf( teleop_grasp::pose_ee ) * d_pose_tf );
+
+	// convert back to geometry_msgs::Pose and return
+	return teleop_grasp::pose_ee_des;
 }
 
 void
-teleop_grasp::set_pose_robot(geometry_msgs::Pose pose)
+teleop_grasp::command_pose_robot(const geometry_msgs::Pose& pose)
 {
 	static ros::NodeHandle nh;
-	static ros::Publisher pub_pose = nh.advertise<geometry_msgs::PoseStamped>(teleop_grasp::get_franka_pose_ee_topic(),1);
+	static ros::Publisher pub_pose = nh.advertise<geometry_msgs::PoseStamped>(teleop_grasp::get_topic("/teleop_grasp/topic_franka_pose_ee"),1);
 
+	// convert msg to correst geometry_msgs::PoseStamped type
 	geometry_msgs::PoseStamped pose_stamped;
-
 	pose_stamped.pose = pose;
 	pose_stamped.header.stamp.sec = ros::Time().sec;
 
+	// send message
 	pub_pose.publish(pose_stamped);
 }
 
 void
-teleop_grasp::set_gripper(teleop_grasp::GripperState open_or_close)
+teleop_grasp::command_gripper(const teleop_grasp::GripperState& open_or_close)
 {
-	actionlib::SimpleActionClient<franka_gripper::GraspAction> action(get_grasp_topic(), true);
-
+	actionlib::SimpleActionClient<franka_gripper::GraspAction> action(teleop_grasp::get_topic("/teleop_grasp/topic_grasp_hand"), true);
 	bool success = action.isServerConnected();
 
 	if (success) 
@@ -128,7 +104,6 @@ teleop_grasp::set_gripper(teleop_grasp::GripperState open_or_close)
 	action.waitForServer();
 
 	franka_gripper::GraspAction msg;
-
 	msg.action_goal.goal.speed = 0.1;
 
 	if (open_or_close == teleop_grasp::GripperState::OPEN)
@@ -144,16 +119,20 @@ teleop_grasp::set_gripper(teleop_grasp::GripperState open_or_close)
 }
 
 geometry_msgs::Pose
-teleop_grasp::predictor::predict_pose_linear(geometry_msgs::Pose current_pose)
+teleop_grasp::predictor::predict_pose_linear()
 {
-	// computes the velocity vector in current position from previous position
-	auto d_pose = geometry_msgs::sub_poses(current_pose, teleop_grasp::pose_hand);
+	// compute diff transform from prev hand pose to current hand pose
+	auto d_pose = Eigen::make_tf(teleop_grasp::pose_hand_prev).inverse() * Eigen::make_tf( teleop_grasp::pose_hand );
 
-	d_pose.position.x *= 2;
-	d_pose.position.y *= 2;
-	d_pose.position.z *= 2;
+	// update prev hand pose
+	teleop_grasp::pose_hand_prev = teleop_grasp::pose_hand;
 
-	auto pose_ee_des = geometry_msgs::add_poses( teleop_grasp::pose_ee, d_pose );
+	// extend relative prediction vector
+	d_pose.translation() *= 2;
 
-	return pose_ee_des;
+	// compute new desired ee pose
+	teleop_grasp::pose_ee_des = geometry_msgs::make_pose( Eigen::make_tf( teleop_grasp::pose_ee ) * d_pose );
+
+	// convert to geometry_msgs::Pose and return
+	return teleop_grasp::pose_ee_des;
 }
