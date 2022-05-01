@@ -1,6 +1,6 @@
 
 <launch>
-    <arg name="cam_device"  doc="Name of the image capture device"       default="/dev/video0"/>
+    <arg name="cam_device" doc="Name of the image capture device" default="/dev/video0"/>
     <arg name="grasp_state" default="/hand_gesture/grasp_state" />
     <arg name="image_raw" default="/cv_camera/image_raw" />
     <arg name="image_hand" default="/pose_gesture/image_hand" />
@@ -21,10 +21,10 @@
         <param name="topic_image_raw" value="$(arg image_raw)" />
         <param name="topic_image_hand" value="$(arg image_hand)" />
         <param name="topic_pose_hand" value="$(arg pose_hand)" />
-        <param name="show_visualizations"  value="$(arg show_visualizations)" />
+        <param name="show_visualizations"  value="$(arg show_visualizations)"/>
     </node>
 
      <!-- rqt_image_viewer node -->
-    <node pkg="rqt_image_view" type="rqt_image_view" name="rqt_image_view" args="topic:=$(arg image_hand)" if="$(arg show_visualizations)"> </node>
+    <node if="$(arg show_visualizations)" pkg="rqt_image_view" type="rqt_image_view" name="rqt_image_view" args="topic:=$(arg image_hand)"/>
 
 </launch>
