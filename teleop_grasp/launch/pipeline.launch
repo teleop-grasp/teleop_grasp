@@ -3,9 +3,12 @@
 	<!-- ARGUMENTS -->
 	<!-- see README.md for info -->
 
-	<arg name="cam_device"  doc="Name of the image capture device"       default="/dev/video0"/>
-	<arg name="grasp_state" default="/hand_gesture/grasp_state" />
-	<arg name="image_raw"   default="/cv_camera/image_raw" />
+    <arg name="cam_device"  doc="Name of the image capture device"       default="/dev/video0"/>
+    <arg name="grasp_state" default="/hand_gesture/grasp_state" />
+    <arg name="image_raw" default="/cv_camera/image_raw" />
+    <arg name="image_hand" default="/pose_gesture/image_hand" />
+    <arg name="pose_hand" default="/pose_gesture/pose_hand" />
+    <arg name="show_visualizations" default="false" />
 
 	<arg name="sim"         doc="Lanch in simulation environment"        default="true"/>
 	<arg name="world"       doc="The Gazebo world to use"                default="workcell.world"/>
@@ -27,19 +30,18 @@
 		<!-- <param name="frame_id" value="camera_video0" /> -->
 	</node>
 
-    <!-- gesture estimation node -->
-    <node pkg="gesture_estimation" type="hand_gesture.py" name="hand_gesture" output="screen">
-		<param name="topic_grasp_state" value="$(arg grasp_state)"/>
-		<param name="topic_image_raw" value="$(arg image_raw)" />
-		<!-- <param name="frame_id" value="camera_video0" /> -->
-	</node>
-
-	<!-- rqt_image_viewer node -->
-    <node pkg="rqt_image_view" type="rqt_image_view" name="rqt_image_view" args="topic:=$(arg image_hand)">
+     <!-- pose and gesture node -->
+    <node pkg="hand_tracking" type="pose_gesture.py" name="pose_gesture" output="screen">
+        <param name="topic_grasp_state" value="$(arg grasp_state)"/>
+        <param name="topic_image_raw" value="$(arg image_raw)" />
+        <param name="topic_image_hand" value="$(arg image_hand)" />
+        <param name="topic_pose_hand" value="$(arg pose_hand)" />
+        <param name="show_visualizations"  value="$(arg show_visualizations)" />
     </node>
 
-	<!-- arm pose estimation -->
-	<!-- ... -->
+	<!-- rqt_image_viewer node -->
+	<node pkg="rqt_image_view" type="rqt_image_view" name="rqt_image_view" args="topic:=$(arg image_hand)" if="$(arg show_visualizations)"> </node>
+
 
 	<!-- teleop_grasp (system) node -->
 	<node pkg="teleop_grasp" type="teleoperation" name="teleoperation"> 

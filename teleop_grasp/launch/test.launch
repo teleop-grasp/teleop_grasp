@@ -5,6 +5,7 @@
     <arg name="image_raw" default="/cv_camera/image_raw" />
     <arg name="image_hand" default="/pose_gesture/image_hand" />
     <arg name="pose_hand" default="/pose_gesture/pose_hand" />
+    <arg name="show_visualizations" default="false" />
     
     
     <!-- camera node -->
@@ -20,11 +21,10 @@
         <param name="topic_image_raw" value="$(arg image_raw)" />
         <param name="topic_image_hand" value="$(arg image_hand)" />
         <param name="topic_pose_hand" value="$(arg pose_hand)" />
-        <!-- <param name="frame_id" value="camera_video0" /> -->
+        <param name="show_visualizations"  value="$(arg show_visualizations)" />
     </node>
 
      <!-- rqt_image_viewer node -->
-    <node pkg="rqt_image_view" type="rqt_image_view" name="rqt_image_view" args="topic:=$(arg image_hand)">
-    </node>
+    <node pkg="rqt_image_view" type="rqt_image_view" name="rqt_image_view" args="topic:=$(arg image_hand)" if="$(arg show_visualizations)"> </node>
 
 </launch>
