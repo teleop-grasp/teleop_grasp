@@ -49,14 +49,14 @@ cd $WS_PATH
 vcs import --input $REPOS_FILE_PATH --debug
 vcs pull src
 
+# custom dependecies
+echo -e  "\n\e[104mInstalling custom dependencies...\e[49m\n" && sleep 1
+python3 -m pip install -r $WS_PATH/src/hand_tracking/requirements.txt --user
+
 # update and install any system dependencies (rosdep)
 echo -e  "\n\e[104mInstalling rosdep dependencies...\e[49m\n" && sleep 1
 rosdep update
 rosdep install --from-paths src --ignore-src -r -y
-
-# custom dependecies
-echo -e  "\n\e[104mInstalling custom dependencies...\e[49m\n" && sleep 1
-python3 -m pip install -r $WS_PATH/src/gesture_estimation/requirements.txt
 
 # build the workspace
 echo -e  "\n\e[104mBuilding workspace...\e[49m\n" && sleep 1
