@@ -34,7 +34,7 @@ namespace franka_controllers
 	{
 	public:
 
-		static inline constexpr auto CONTROLLER_NAME = "CartesianPDController";
+		static inline constexpr auto CONTROLLER_NAME = "CartesianAdmittanceController";
 
 		CartesianAdmittanceController() {}
 		~CartesianAdmittanceController() { sub_command.shutdown(); }
@@ -67,7 +67,7 @@ namespace franka_controllers
 			Eigen::Matrix6x7d J;
 			Eigen::Matrix6x7d dJ;
 			Eigen::Matrix7d M;
-			Eigen::Vector7d C;
+			Eigen::Vector7d c; // c = C*dq
 			Eigen::Vector7d g;
 		};
 
@@ -79,7 +79,7 @@ namespace franka_controllers
 		std::unique_ptr<franka_hw::FrankaStateHandle> state_handle;
 
 		realtime_tools::RealtimeBuffer<Pose>          buffer_pose_ref;
-		Pose                                          pose_d;
+		Pose                                          pose_d; // CHANGE TO STRUCT
 		Eigen::Vector7d                               qN_d;
 
 		Eigen::Matrix6d                               kp, kd;
@@ -90,10 +90,10 @@ namespace franka_controllers
 
 		ros::Subscriber                               sub_command;
 
-		std::mutex mtx_msg_debug;
-		ros::Publisher pub_msg_debug;
-		std::thread thread_msg_debug;
-		franka_controllers::CartesianAdmittanceControllerDebug msg_debug;
+		std::mutex                                    mtx_msg_debug;
+		ros::Publisher                                pub_msg_debug;
+		std::thread                                   thread_msg_debug;
+		CartesianAdmittanceControllerDebug            msg_debug;
 
 		Frame
 		get_desired(const Eigen::Vector3d& p_ref, const Eigen::Matrix3d& R_ref);
@@ -118,11 +118,16 @@ namespace franka_controllers
 
 		Eigen::Vector6d
 		pos_ori_control(
-			const Eigen::Vector6d& x_c,
-			const Eigen::Vector6d& dx_c,
-			const Eigen::Vector6d& ddx_c,
-			const Eigen::Vector6d& x_e,
-			const Eigen::Vector6d& dx_e
+			const Eigen::Vector3d& p_c,
+			const Eigen::Vector3d& p_e,
+			const Eigen::Matrix3d& R_c,
+			const Eigen::Matrix3d& R_e,
+			const Eigen::Vector3d& dp_c,
+			const Eigen::Vector3d& dp_e,
+			const Eigen::Vector3d& w_c,
+			const Eigen::Vector3d& w_e,
+			const Eigen::Vector3d& ddp_c,
+			const Eigen::Vector3d& dw_c
 		);
 
 		Eigen::Vector6d

@@ -18,8 +18,7 @@
 	<buildtool_depend>catkin</buildtool_depend>
 
 	<!-- libraries -->
-	<depend>Eigen3</depend>
-	<!-- <depend>Boost</depend> -->
+	<depend>eigen</depend>
 
 	<!-- ROS packages -->
 	<depend>roscpp</depend>
@@ -29,8 +28,8 @@
 	<depend>cv_camera</depend>
 	<depend>franka_controllers</depend>
 	<depend>franka_gripper</depend>
-	<depend>gesture_estimation</depend>
-	
+	<depend>hand_tracking</depend>
+
 	<export>
 		<!-- https://github.com/sloretz/gazebo_model_path_example -->
 		<gazebo_ros gazebo_model_path="${prefix}/models"/>

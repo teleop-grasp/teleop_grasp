@@ -18,11 +18,10 @@
 	<!-- ################################################################################################################# -->
 
 	<!-- load controller configurations -->
-	<rosparam file="$(find franka_gazebo)/config/sim_controllers.yaml" subst_value="true" />
-	<rosparam file="$(find franka_controllers)/config/franka_controllers.yaml" subst_value="true" />
-	
+	<rosparam file="$(find franka_controllers)/config/franka_controllers.yaml" subst_value="true"/>
+
 	<!-- plotjuggler -->
-	<node if="$(arg plotjuggler)" name="plotjuggler" pkg="plotjuggler" type="plotjuggler" args="--layout $(find teleop_grasp)/config/plotjuggler_layout.xml" />
+	<node if="$(arg plotjuggler)" name="plotjuggler" pkg="plotjuggler" type="plotjuggler" args="--layout $(find teleop_grasp)/config/plotjuggler_layout.xml"/>
 
 	<!-- simulation -->
 	<group if="$(arg sim)">
@@ -37,8 +36,8 @@
 		</include>
 
 		<node if="$(arg rviz_marker)" name="interactive_marker" pkg="franka_example_controllers" type="interactive_marker.py">
-			<param name="link_name" value="$(arg arm_id)_link0" />
-			<remap to="$(arg controller)/command" from="equilibrium_pose" />
+			<param name="link_name" value="$(arg arm_id)_link0"/>
+			<remap to="$(arg controller)/command" from="equilibrium_pose"/>
 		</node>
 
 	</group>
@@ -47,8 +46,8 @@
 	<group unless="$(arg sim)">
 
 		<include file="$(find franka_control)/launch/franka_control.launch" >
-			<arg name="robot_ip" value="$(arg robot_ip)" />
-			<arg name="load_gripper" value="$(arg use_gripper)" />
+			<arg name="robot_ip" value="$(arg robot_ip)"/>
+			<arg name="load_gripper" value="$(arg use_gripper)"/>
 		</include>
 
 		<node pkg="controller_manager"
@@ -58,8 +57,8 @@
 			  args="$(arg controller)"
 		/>
 
-		<node if="$(arg rviz)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_example_controllers)/launch/robot.rviz"/>
-		<!-- <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" /> -->
+		<node if="$(arg rviz)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find teleop_grasp)/config/robot.rviz"/>
+		<!-- <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false"/> -->
 
 	</group>
 
