@@ -16,11 +16,11 @@
 
     <!-- gesture estimation node -->
     <node pkg="hand_tracking" type="pose_gesture.py" name="pose_gesture" output="screen">
-            <param name="topic_grasp_state" value="$(arg grasp_state)"/>
-            <param name="topic_image_raw" value="$(arg image_raw)" />
-            <param name="topic_image_hand" value="$(arg image_hand)" />
-            <param name="topic_pose_hand" value="$(arg pose_hand)" />
-            <!-- <param name="frame_id" value="camera_video0" /> -->
+        <param name="topic_grasp_state" value="$(arg grasp_state)"/>
+        <param name="topic_image_raw" value="$(arg image_raw)" />
+        <param name="topic_image_hand" value="$(arg image_hand)" />
+        <param name="topic_pose_hand" value="$(arg pose_hand)" />
+        <!-- <param name="frame_id" value="camera_video0" /> -->
     </node>
 
 
