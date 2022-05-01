@@ -14,7 +14,7 @@
 		<!-- <param name="frame_id" value="camera_video0" /> -->
 	</node>
 
-    <!-- gesture estimation node -->
+    <!-- pose and gesture node -->
     <node pkg="hand_tracking" type="pose_gesture.py" name="pose_gesture" output="screen">
         <param name="topic_grasp_state" value="$(arg grasp_state)"/>
         <param name="topic_image_raw" value="$(arg image_raw)" />
@@ -23,5 +23,8 @@
         <!-- <param name="frame_id" value="camera_video0" /> -->
     </node>
 
+     <!-- rqt_image_viewer node -->
+    <node pkg="rqt_image_view" type="rqt_image_view" name="rqt_image_view" args="topic:=$(arg image_hand)">
+    </node>
 
 </launch>
