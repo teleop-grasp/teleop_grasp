@@ -18,16 +18,16 @@ main(int argc, char** argv)
 
 	// load topics
 	auto topic_grasp_state      = ros::param::param<std::string>("~topic_grasp_state","");
-	// auto topic_pose_hand        = ros::param::param<std::string>("~topic_pose_hand","");
+	auto topic_pose_hand        = ros::param::param<std::string>("~topic_pose_hand","");
 	auto topic_franka_pose_ee   = ros::param::param<std::string>("~topic_franka_pose_ee","");
 
 
 
-	ros::Subscriber sub_grasp = nh.subscribe<std_msgs::Bool>( topic_grasp_state, 1, [&](const auto& msg){ std::cout << "TESTING......" << std::endl; teleop_grasp::gesture_state = (*msg).data; });
-	// ros::Subscriber sub_pose  = nh.subscribe<geometry_msgs::Pose>( topic_pose_hand, 1, [&](const auto& msg){ teleop_grasp::pose_hand = *msg; }); 
+	ros::Subscriber sub_grasp = nh.subscribe<std_msgs::Bool>( topic_grasp_state, 1, [&](const auto& msg){ teleop_grasp::gesture_state = (*msg).data; });
+	ros::Subscriber sub_pose  = nh.subscribe<geometry_msgs::Pose>( topic_pose_hand, 1, [&](const auto& msg){ teleop_grasp::pose_hand = *msg; }); 
 
 	ROS_WARN_STREAM("topic_grasp_state: " << topic_grasp_state);
-	// ROS_WARN_STREAM("topic_pose_hand: " << topic_pose_hand);
+	ROS_WARN_STREAM("topic_pose_hand: " << topic_pose_hand);
 	ROS_WARN_STREAM("topic_franka_pose_ee: " << topic_franka_pose_ee);
 
 	// -- Synthetic data points ---------------------------------------
@@ -46,7 +46,7 @@ main(int argc, char** argv)
 
 	teleop_grasp::calibrate();
 
-	ros::Rate rate(1);
+	ros::Rate rate(100);
 
 	while (ros::ok()) 
 	{

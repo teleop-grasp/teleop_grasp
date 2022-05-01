@@ -1,4 +1,6 @@
+#include "franka_gripper/GraspAction.h"
 #include "franka_gripper/GraspActionGoal.h"
+#include "franka_gripper/MoveAction.h"
 #include "franka_msgs/FrankaState.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "ros/node_handle.h"
@@ -17,7 +19,7 @@ teleop_grasp::calibrate()
 	teleop_grasp::pose_ee = geometry_msgs::make_pose(Eigen::Isometry3d(Eigen::Matrix4d::Map(franka_state.O_T_EE.data())));
 
 	// get hand pose
-	// teleop_grasp::pose_hand = *(ros::topic::waitForMessage<geometry_msgs::Pose>(teleop_grasp::get_topic("/teleoperation/pose_hand"),nh));
+	teleop_grasp::pose_hand = *(ros::topic::waitForMessage<geometry_msgs::Pose>(teleop_grasp::get_topic("pose_hand"),nh));
 	teleop_grasp::pose_hand_prev = teleop_grasp::pose_hand;
 
 	// get current position of robot ee and orientation of hand, then send to robot
@@ -29,7 +31,7 @@ teleop_grasp::calibrate()
 	cali_pose.block<3,3>(0,0) = R;
 	cali_pose.block<3,1>(0,3) = t;
 
-	// command_pose_robot( geometry_msgs::make_pose( Eigen::Isometry3d(cali_pose) ) );
+	command_pose_robot( geometry_msgs::make_pose( Eigen::Isometry3d(cali_pose) ) );
 
 	// calibration completed
 	ROS_INFO_STREAM("calibration has been completed with:\n\trobot init tcp pose: " << teleop_grasp::pose_ee << "\n\thand init pose: " << teleop_grasp::pose_hand);
@@ -94,28 +96,28 @@ void
 teleop_grasp::command_gripper(const teleop_grasp::GripperState& open_or_close)
 {
 	ROS_WARN_STREAM("sending command to gripper...");
-	//  /franka_gripper/grasp/goal franka_gripper/GraspActionGoal
-	// actionlib::SimpleActionClient<franka_gripper::GraspActionGoal> action("/franka_gripper/grasp/goal", true);
-	actionlib::SimpleActionClient<franka_gripper::GraspAction> action("/franka_gripper/grasp/goal", true);
-	bool success = action.isServerConnected();
+	// /franka_gripper/move/goal franka_gripper/MoveActionGoal
 
-	if (success) 
-		ROS_WARN("Connected successfully!...");
-
+	actionlib::SimpleActionClient<franka_gripper::MoveAction> action("/franka_gripper/move",true);
+	
 	action.waitForServer();
 
 	ROS_WARN_STREAM("sending action to gripper...");
 
-	franka_gripper::GraspAction msg;
+	franka_gripper::MoveAction msg;
 	msg.action_goal.goal.speed = 0.1;
+
+	ROS_WARN_STREAM((open_or_close == teleop_grasp::GripperState::OPEN));
 
 	if (open_or_close == teleop_grasp::GripperState::OPEN)
 	{
+		teleop_grasp::gesture_state = true;
 		msg.action_goal.goal.width = 0.045;
 		action.sendGoal(msg.action_goal.goal);
 	}
 	else
 	{
+		teleop_grasp::gesture_state = false;
 		msg.action_goal.goal.width = 0.01;
 		action.sendGoal(msg.action_goal.goal);
 	}
