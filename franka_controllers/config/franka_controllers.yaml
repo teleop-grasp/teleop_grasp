@@ -63,7 +63,7 @@ cartesian_admittance_controller:
     kvp: 30
     kvo: 7
     kn: 0.5 # nullspace stiffness
-    kc: 1 # 2 * sqrt(kn)
+    kc: 0.7071 # 2 * sqrt(kn) for damping ratio of 1.0
 
     dtau_max: 1000 # set to -1 to disable rotatum saturation
     slew_rate: 0.005 # @ 1000 Hz
