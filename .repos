@@ -13,6 +13,6 @@ repositories:
     type: git
     url: git@github.com:martinandrovich/ros_utils.git
 
-  src/gesture_estimation:
+  src/hand_tracking:
     type: git
-    url: git@github.com:teleop-grasp/gesture_estimation.git
+    url: git@github.com:teleop-grasp/hand_tracking.git
