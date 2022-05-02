@@ -1,5 +1,3 @@
-#include "franka_gripper/GraspAction.h"
-#include "franka_gripper/GraspActionGoal.h"
 #include "franka_gripper/MoveAction.h"
 #include "franka_msgs/FrankaState.h"
 #include "geometry_msgs/PoseStamped.h"
@@ -15,11 +13,15 @@ teleop_grasp::calibrate()
 	static ros::NodeHandle nh;
 
 	// get robot ee pose
+	ROS_WARN_STREAM("testing...");
 	auto franka_state     = *(ros::topic::waitForMessage<franka_msgs::FrankaState>("/franka_state_controller/franka_states",nh));
 	teleop_grasp::pose_ee = geometry_msgs::make_pose(Eigen::Isometry3d(Eigen::Matrix4d::Map(franka_state.O_T_EE.data())));
 
 	// get hand pose
-	teleop_grasp::pose_hand = *(ros::topic::waitForMessage<geometry_msgs::Pose>(teleop_grasp::get_topic("pose_hand"),nh));
+	auto topic_pose_hand = ros::param::param<std::string>("/teleoperation/topic_pose_hand","");
+	teleop_grasp::pose_hand = *(ros::topic::waitForMessage<geometry_msgs::Pose>(topic_pose_hand,nh));
+
+	// update prev hand pose
 	teleop_grasp::pose_hand_prev = teleop_grasp::pose_hand;
 
 	// get current position of robot ee and orientation of hand, then send to robot
@@ -54,21 +56,28 @@ geometry_msgs::Pose
 teleop_grasp::compute_desired_ee_pose(const geometry_msgs::Pose& pose_hand)
 {
 	// convert to transformation matrix
-	auto pose_hand_tf = Eigen::make_tf(pose_hand);
+	auto pose_hand_tf      = Eigen::make_tf(teleop_grasp::pose_hand);
+	auto pose_hand_prev_tf = Eigen::make_tf(teleop_grasp::pose_hand_prev);
 
 	// compute diff transform from prev hand pose to current hand pose
-	auto d_pose_tf = Eigen::make_tf(teleop_grasp::pose_hand_prev).inverse() * pose_hand_tf;
+	auto d_pose_tf = pose_hand_prev_tf.inverse() * pose_hand_tf;
 
 	// if the velocity becomes too large
 	if (  d_pose_tf.translation().squaredNorm() > teleop_grasp::MAX_LIN_VELOCITY and Eigen::AngleAxisd(d_pose_tf.rotation() ).angle() > teleop_grasp::MAX_ANG_VELOCITY )
+	{
+		ROS_WARN_STREAM("velocity too large...");
 		d_pose_tf = Eigen::Isometry3d::Identity();
+	}
 
 	// if no changes are made to the pose, this is caused by the hand moving outside the camera's view
 	if (  d_pose_tf.translation().squaredNorm() < teleop_grasp::CHANGE_THRESHOLD and Eigen::AngleAxisd(d_pose_tf.rotation() ).angle() < teleop_grasp::CHANGE_THRESHOLD)
-		d_pose_tf = Eigen::Isometry3d::Identity();
+	{
 
-	// update prev hand pose
-	teleop_grasp::pose_hand_prev = teleop_grasp::pose_hand; // obs prev write 
+		ROS_WARN_STREAM("no changes are made...");
+		d_pose_tf = Eigen::Isometry3d::Identity();
+	}
+
+	teleop_grasp::pose_hand_prev = teleop_grasp::pose_hand;
 
 	// compute new desired ee pose
 	teleop_grasp::pose_ee_des = geometry_msgs::make_pose( Eigen::make_tf( teleop_grasp::pose_ee ) * d_pose_tf );
@@ -83,6 +92,10 @@ teleop_grasp::command_pose_robot(const geometry_msgs::Pose& pose, const std::str
 	static ros::NodeHandle nh;
 	static ros::Publisher pub_pose = nh.advertise<geometry_msgs::PoseStamped>(topic_pose,1);
 
+	ROS_WARN_STREAM("topic_pose: " << topic_pose);
+	ROS_WARN_STREAM("des_pose.pos: " << pose.position);
+	ROS_WARN_STREAM("commanding a pose to the robot...\n" << pose.position);
+
 	// convert msg to correst geometry_msgs::PoseStamped type
 	geometry_msgs::PoseStamped pose_stamped;
 	pose_stamped.pose = pose;
@@ -96,7 +109,6 @@ void
 teleop_grasp::command_gripper(const teleop_grasp::GripperState& open_or_close)
 {
 	ROS_WARN_STREAM("sending command to gripper...");
-	// /franka_gripper/move/goal franka_gripper/MoveActionGoal
 
 	actionlib::SimpleActionClient<franka_gripper::MoveAction> action("/franka_gripper/move",true);
 	
@@ -128,9 +140,6 @@ teleop_grasp::predictor::predict_pose_linear()
 {
 	// compute diff transform from prev hand pose to current hand pose
 	auto d_pose = Eigen::make_tf(teleop_grasp::pose_hand_prev).inverse() * Eigen::make_tf( teleop_grasp::pose_hand );
-
-	// update prev hand pose
-	teleop_grasp::pose_hand_prev = teleop_grasp::pose_hand;
 
 	// extend relative prediction vector
 	d_pose.translation() *= 2;

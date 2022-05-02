@@ -37,7 +37,7 @@ namespace teleop_grasp
 	compute_desired_ee_pose(const geometry_msgs::Pose& pose_hand);
 
 	void
-	command_pose_robot(const geometry_msgs::Pose& msg, const std::string& topic_pose = "~franka_pose_ee");
+	command_pose_robot(const geometry_msgs::Pose& msg, const std::string& topic_pose = "/cartesian_pd_nullspace_controller/command");
 
 	void 
 	command_gripper(const teleop_grasp::GripperState& open_or_close);
