@@ -52,18 +52,18 @@ cartesian_admittance_controller:
     kd: [30, 30, 30, 15, 15, 15] # dampening
 
     Kp: [200, 200, 200]
-    Ko: [10, 10, 10]
+    Ko: [100, 100, 100]
     Dp: [30, 30, 30]
-    Do: [7, 7, 7]
+    Do: [15, 15, 15]
     Mp: [1, 1, 1]
     Mo: [1, 1, 1]
 
     kpp: 200
-    kpo: 10
+    kpo: 100
     kvp: 30
-    kvo: 7
+    kvo: 15
     kn: 0.5 # nullspace stiffness
-    kc: 0.7071 # 2 * sqrt(kn) for damping ratio of 1.0
+    # kc: 2 * sqrt(kn) # for damping ratio of 1.0 (set in C++)
 
     dtau_max: 1000 # set to -1 to disable rotatum saturation
-    slew_rate: 0.005 # @ 1000 Hz
+    slew_rate: 1.0 # @ 1000 Hz
