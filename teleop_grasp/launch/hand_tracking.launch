@@ -10,16 +10,6 @@
 	<arg name="topic_pose_hand"    doc=""                                    default="/pose_gesture/pose_hand"/>
 	<arg name="visualize_tracking" doc=""                                    default="false"/>
 
-	<arg name="sim"                doc="Lanch in simulation environment"     default="true"/>
-	<arg name="world"              doc="The Gazebo world to use"             default="workcell.world"/>
-
-	<arg name="controller"         doc="Controller to use with ros_control"  default="cartesian_pd_nullspace_controller"/>
-
-	<arg name="use_gripper"        doc="Use the Franka gripper"              default="true"/>
-	<arg name="rviz"               doc="Launch RVIZ"                         default="false"/>
-
-	<arg name="robot_ip"           doc="IP address of physical robot"        default=""/>
-
 	<!-- ################################################################################################################# -->
 
 	<!-- camera node -->
@@ -40,19 +30,5 @@
 
 	 <!-- rqt_image_viewer node -->
 	<node if="$(arg visualize_tracking)" pkg="rqt_image_view" type="rqt_image_view" name="rqt_image_view" args="topic:=$(arg topic_image_hand)"/>
-
-	<!-- teleop_grasp (system) node -->
-	<node pkg="teleop_grasp" type="teleoperation" name="teleoperation">
-		<param name="topic_grasp_state"     value="$(arg topic_grasp_state)"/>
-		<param name="topic_pose_hand"       value="/topic_pose_hand"/>
-		<param name="topic_franka_pose_ee"  value="/$(arg controller)/command"/>
-	</node>
-
-	<!-- robot via franka_ros (hw/sim) -->
-	<include file="$(find teleop_grasp)/launch/robot.launch">
-		<arg name="sim" value="$(arg sim)"/>
-		<arg name="controller" value="$(arg controller)"/>
-		<arg name="use_gripper" value="$(arg use_gripper)"/>
-	</include>
 
 </launch>
