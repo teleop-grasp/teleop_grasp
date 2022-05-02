@@ -3,11 +3,11 @@
 	<!-- ARGUMENTS -->
 	<!-- see README.md for info -->
 
-    <arg name="cam_device"  doc="Name of the image capture device"       default="/dev/video0"/>
-    <arg name="grasp_state" default="/hand_gesture/grasp_state" />
-    <arg name="image_raw" default="/cv_camera/image_raw" />
-    <arg name="image_hand" default="/pose_gesture/image_hand" />
-    <arg name="pose_hand" default="/pose_gesture/pose_hand" />
+    <arg name="cam_device"          doc="Name of the image capture device"       default="/dev/video0"/>
+    <arg name="grasp_state"         default="/hand_gesture/grasp_state" />
+    <arg name="image_raw"           default="/cv_camera/image_raw" />
+    <arg name="image_hand"          default="/pose_gesture/image_hand" />
+    <arg name="pose_hand"           default="/pose_gesture/pose_hand" />
     <arg name="show_visualizations" default="false" />
 
 	<arg name="sim"         doc="Lanch in simulation environment"        default="true"/>
@@ -45,7 +45,7 @@
 	<!-- teleop_grasp (system) node -->
 	<node pkg="teleop_grasp" type="teleoperation" name="teleoperation"> 
 		<param name="topic_grasp_state"     value="$(arg grasp_state)"/>
-		<param name="topic_pose_hand"       value="/topic_pose_hand"/>
+		<param name="topic_pose_hand"       value="$(arg pose_hand)"/>
 		<param name="topic_franka_pose_ee"  value="/$(arg controller)/command"/>
 	</node>
 	

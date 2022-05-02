@@ -72,8 +72,8 @@ target_link_libraries(pipeline ${catkin_LIBRARIES} teleop_grasp)
 add_executable(teleoperation src/teleoperation.cpp)
 target_link_libraries(teleoperation ${catkin_LIBRARIES} teleop_grasp)
 
-add_executable(demo src/demo.cpp)
-target_link_libraries(demo ${catkin_LIBRARIES} teleop_grasp)
+# add_executable(demo src/demo.cpp)
+# target_link_libraries(demo ${catkin_LIBRARIES} teleop_grasp)
 
 ################################################################################################
 
