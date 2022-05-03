@@ -4,11 +4,12 @@
 	<!-- see README.md for info -->
 
 	<arg name="cam_device"         doc="Name of the image capture device"    default="/dev/video0"/>
-	<arg name="topic_grasp_state"  doc=""                                    default="/hand_gesture/grasp_state"/>
 	<arg name="topic_image_raw"    doc=""                                    default="/cv_camera/image_raw"/>
+	<arg name="topic_grasp_state"  doc=""                                    default="/pose_gesture/grasp_state"/>
 	<arg name="topic_image_hand"   doc=""                                    default="/pose_gesture/image_hand"/>
 	<arg name="topic_pose_hand"    doc=""                                    default="/pose_gesture/pose_hand"/>
 	<arg name="visualize_tracking" doc=""                                    default="false"/>
+	<arg name="ema_alpha"          doc="Exp movavg filter for pose (0-1)"    default="0.4"/>
 
 	<!-- ################################################################################################################# -->
 
@@ -26,6 +27,7 @@
 		<param name="topic_image_hand" value="$(arg topic_image_hand)"/>
 		<param name="topic_pose_hand" value="$(arg topic_pose_hand)"/>
 		<param name="visualize_tracking" value="$(arg visualize_tracking)"/>
+		<param name="ema_alpha" value="$(arg ema_alpha)"/>
 	</node>
 
 	 <!-- rqt_image_viewer node -->
