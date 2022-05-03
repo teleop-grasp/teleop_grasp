@@ -44,7 +44,7 @@
 	<!-- teleop_grasp (system) node -->
 	<node pkg="teleop_grasp" type="teleoperation" name="teleoperation">
 		<param name="topic_grasp_state"     value="$(arg topic_grasp_state)"/>
-		<param name="topic_pose_hand"       value="/topic_pose_hand"/>
+		<param name="topic_pose_hand"       value="$(arg topic_pose_hand)"/>
 		<param name="topic_franka_pose_ee"  value="/$(arg controller)/command"/>
 	</node>
 
