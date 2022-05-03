@@ -49,9 +49,13 @@ cd $WS_PATH
 vcs import --input $REPOS_FILE_PATH --debug
 vcs pull src
 
-# custom dependecies
-echo -e  "\n\e[104mInstalling custom dependencies...\e[49m\n" && sleep 1
-python3 -m pip install -r $WS_PATH/src/hand_tracking/requirements.txt --user
+# python3 dependencies from 'requirements.txt'
+echo -e  "\n\e[104mInstalling python3 dependencies from 'requirements.txt'...\e[49m\n" && sleep 1
+# python3 -m pip install -r $WS_PATH/src/hand_tracking/requirements.txt --user
+for f in $(find $WS_PATH/src -name 'requirements.txt'); do
+	echo -e "Installing requirements for '$f'...\n" && sleep 1
+	python3 -m pip install -r $f --user
+done
 
 # update and install any system dependencies (rosdep)
 echo -e  "\n\e[104mInstalling rosdep dependencies...\e[49m\n" && sleep 1
@@ -60,6 +64,7 @@ rosdep install --from-paths src --ignore-src -r -y
 
 # build the workspace
 echo -e  "\n\e[104mBuilding workspace...\e[49m\n" && sleep 1
+catkin clean -y && sleep 1
 catkin build
 
 # add alias to .bashrc
