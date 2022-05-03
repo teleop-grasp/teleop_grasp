@@ -9,8 +9,8 @@
 	<arg name="topic_image_hand"   doc=""                                        default="/pose_gesture/image_hand"/>
 	<arg name="topic_pose_hand"    doc=""                                        default="/pose_gesture/pose_hand"/>
 	<arg name="visualize_tracking" doc=""                                        default="false"/>
-	<arg name="ema_alpha_trans"    doc="Exp movavg filter for translation (0-1)" default="0.4"/>
-	<arg name="ema_alpha_rot"      doc="Exp movavg filter for rotation (0-1)"    default="0.2"/>
+	<arg name="estimate_depth"     doc="Estimate x-axis (depth)"                 default="false"/>
+	<arg name="ema_alpha"          doc="Exp movavg filter for [R, t] (0-1)"      default="[0.1, 0.4]"/>
 
 	<!-- ################################################################################################################# -->
 
@@ -28,8 +28,8 @@
 		<param name="topic_image_hand" value="$(arg topic_image_hand)"/>
 		<param name="topic_pose_hand" value="$(arg topic_pose_hand)"/>
 		<param name="visualize_tracking" value="$(arg visualize_tracking)"/>
-		<param name="ema_alpha_trans" value="$(arg ema_alpha_trans)"/>
-		<param name="ema_alpha_rot" value="$(arg ema_alpha_rot)"/>
+		<param name="estimate_depth" value="$(arg estimate_depth)"/>
+		<rosparam param="ema_alpha" subst_value="True">$(arg ema_alpha)</rosparam>
 	</node>
 
 	 <!-- rqt_image_viewer node -->
