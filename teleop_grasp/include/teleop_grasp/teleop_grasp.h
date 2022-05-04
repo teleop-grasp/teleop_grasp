@@ -17,14 +17,15 @@ namespace teleop_grasp
 {
 
 	enum class GripperState { CLOSE, OPEN };
-	inline bool                               gesture_state = false;
+	inline bool                               gesture_state      = false;
+	inline bool                               gesture_state_prev = false;
 	inline geometry_msgs::Pose                pose_hand;
 	inline geometry_msgs::Pose                pose_hand_prev;
 	inline geometry_msgs::Pose                pose_ee_des;
 	inline geometry_msgs::Pose                pose_ee;
 	inline geometry_msgs::Pose                pose_d;
 	inline std::array<geometry_msgs::Pose, 3> poses_prev;
-	inline constexpr int                      MAX_LIN_VELOCITY = 1;
+	inline constexpr double                   MAX_LIN_VELOCITY = 0.5;
 	inline constexpr double                   MAX_ANG_VELOCITY = M_PI / 2.0;
 	inline constexpr double                   CHANGE_THRESHOLD = 0.05;
 

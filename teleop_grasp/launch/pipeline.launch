@@ -9,6 +9,8 @@
 	<arg name="topic_image_hand"   doc=""                                    default="/pose_gesture/image_hand"/>
 	<arg name="topic_pose_hand"    doc=""                                    default="/pose_gesture/pose_hand"/>
 	<arg name="visualize_tracking" doc=""                                    default="false"/>
+	<arg name="estimate_depth"     doc="Estimate x-axis (depth)"             default="false"/>
+	<arg name="ema_alpha"          doc="Exp movavg filter for [R, t] (0-1)"  default="[0.3, 0.4]"/>
 
 	<arg name="sim"                doc="Lanch in simulation environment"     default="true"/>
 	<arg name="world"              doc="The Gazebo world to use"             default="workcell.world"/>
@@ -36,6 +38,8 @@
 		<param name="topic_image_hand" value="$(arg topic_image_hand)"/>
 		<param name="topic_pose_hand" value="$(arg topic_pose_hand)"/>
 		<param name="visualize_tracking" value="$(arg visualize_tracking)"/>
+		<param name="estimate_depth" value="$(arg estimate_depth)"/>
+		<rosparam param="ema_alpha" subst_value="True">$(arg ema_alpha)</rosparam>
 	</node>
 
 	 <!-- rqt_image_viewer node -->
