@@ -16,86 +16,61 @@ teleop_grasp::calibrate()
 	static ros::NodeHandle nh;
 
 	// get robot ee pose
-	auto franka_state     = *(ros::topic::waitForMessage<franka_msgs::FrankaState>("/franka_state_controller/franka_states",nh));
-	teleop_grasp::pose_ee = geometry_msgs::make_pose(Eigen::Isometry3d(Eigen::Matrix4d::Map(franka_state.O_T_EE.data())));
+	teleop_grasp::calibrate_pose_franka = utils::get_current_franka_pose();
 
 	// get hand pose
-	auto topic_pose_hand = ros::param::param<std::string>("/teleoperation/topic_pose_hand","");
-	teleop_grasp::pose_hand = *(ros::topic::waitForMessage<geometry_msgs::Pose>(topic_pose_hand,nh));
+	teleop_grasp::pose_hand = utils::get_current_hand_pose();
 
-	// update prev hand pose
-	teleop_grasp::pose_hand_prev = teleop_grasp::pose_hand;
+	ROS_WARN_STREAM("calibrated position: \n" << teleop_grasp::calibrate_pose_franka);
 
-	// get current position of robot ee and orientation of hand, then send to robot
+	auto T1 = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
+	auto T2 = Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitZ());
 
-	auto t = Eigen::make_tf(teleop_grasp::pose_ee).translation();
-	auto R = Eigen::make_tf(teleop_grasp::pose_hand).rotation();
+	teleop_grasp::calibrate_pose_franka.orientation = geometry_msgs::make_pose( Eigen::make_tf(teleop_grasp::calibrate_pose_franka) * T1 * T2 ).orientation;
 
-	Eigen::Isometry3d cali_pose;
-	cali_pose.setIdentity();
-	cali_pose.rotate(R).translate(t);
-
-	// rotate to same frame as hand
-	cali_pose = utils::rotate_to_hand_frame(Eigen::Isometry3d(cali_pose));
-
-	ROS_WARN_STREAM("calibrated position: \n" << cali_pose.matrix());
-
-	command_pose_robot( geometry_msgs::make_pose( cali_pose ) );
+	command_pose_robot(teleop_grasp::calibrate_pose_franka);
 
 	// calibration completed
-	ROS_WARN_STREAM("calibration has been completed with:\n\trobot init tcp pose: " << teleop_grasp::pose_ee << "\n\thand init pose: " << teleop_grasp::pose_hand);
-}
-
-std::string
-teleop_grasp::get_topic(const std::string& topic)
-{
-	std::string topic_out = "";
-
-	if (not ros::param::get("~" + topic,topic_out)) 
-	{
-		ROS_ERROR_STREAM("Could not read parameter " << topic);
-		return topic_out;
-	}
-	return topic_out;
+	ROS_WARN_STREAM("calibration has been completed...");
 }
 
 geometry_msgs::Pose
-teleop_grasp::compute_desired_ee_pose(const geometry_msgs::Pose& pose_hand)
+teleop_grasp::compute_desired_ee_pose()
 {
-	// convert to transformation matrix
-	auto pose_hand_tf      = Eigen::make_tf(teleop_grasp::pose_hand);
-	auto pose_hand_prev_tf = Eigen::make_tf(teleop_grasp::pose_hand_prev);
 
-	// compute diff transform from prev hand pose to current hand pose
-	auto d_pose_tf = pose_hand_prev_tf.inverse() * pose_hand_tf;
+	// auto pose_hand_tf      = Eigen::make_tf(teleop_grasp::pose_hand);
+	// auto pose_hand_prev_tf = Eigen::make_tf(teleop_grasp::pose_hand_prev);
 
-	// if the velocity becomes too large
-	if ( utils::has_too_much_change_occurred(pose_hand_prev_tf, pose_hand_tf)  )
-	{
-		ROS_WARN_STREAM("velocity too large...");
-		d_pose_tf = Eigen::Isometry3d::Identity();
-		return geometry_msgs::make_pose( pose_hand_tf );
-	}
+	// // compute diff transform from prev hand pose to current hand pose
+	// auto d_pose_tf = pose_hand_prev_tf.inverse() * pose_hand_tf;
 
-	// if no changes are made to the pose, this is caused by the hand moving outside the camera's view
-	if ( utils::has_any_change_occurred(pose_hand_prev_tf, pose_hand_tf) )
-	{
-		ROS_WARN_STREAM("no changes are made...");
-		d_pose_tf = Eigen::Isometry3d::Identity();
-		return geometry_msgs::make_pose( pose_hand_tf );
-	}
+	// // if the velocity becomes too large
+	// if ( utils::has_too_much_change_occurred(pose_hand_prev_tf, pose_hand_tf)  )
+	// {
+	// 	ROS_WARN_STREAM("velocity too large...");
+	// 	d_pose_tf = Eigen::Isometry3d::Identity();
+	// 	return geometry_msgs::make_pose( pose_hand_tf );
+	// }
+
+	// // if no changes are made to the pose, this is caused by the hand moving outside the camera's view
+	// if ( utils::has_any_change_occurred(pose_hand_prev_tf, pose_hand_tf) )
+	// {
+	// 	ROS_WARN_STREAM("no changes are made...");
+	// 	d_pose_tf = Eigen::Isometry3d::Identity();
+	// 	return geometry_msgs::make_pose( pose_hand_tf );
+	// }
+
+	auto T1 = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
+	auto T2 = Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitZ());
 
 	teleop_grasp::pose_hand_prev = teleop_grasp::pose_hand;
 
-	ROS_WARN_STREAM("d_pose_tf = \n" << d_pose_tf.matrix());
+	teleop_grasp::pose_hand.orientation = geometry_msgs::make_pose( Eigen::make_tf( teleop_grasp::calibrate_pose_franka ) ).orientation;
+	teleop_grasp::pose_hand = teleop_grasp::utils::restrict_pose(teleop_grasp::pose_hand);
 
-	// compute new desired ee pose
-	teleop_grasp::pose_ee_des = geometry_msgs::make_pose( Eigen::make_tf( teleop_grasp::pose_ee ) * d_pose_tf );
-	teleop_grasp::pose_ee = teleop_grasp::pose_ee_des;
+	ROS_WARN_STREAM("finished hand pose = \n" << teleop_grasp::pose_hand);
 
-
-	// convert back to geometry_msgs::Pose and return
-	return teleop_grasp::pose_ee_des;
+	return teleop_grasp::pose_hand;
 }
 
 void
@@ -104,20 +79,15 @@ teleop_grasp::command_pose_robot(const geometry_msgs::Pose& pose, const std::str
 	static ros::NodeHandle nh;
 	static ros::Publisher pub_pose = nh.advertise<geometry_msgs::PoseStamped>(topic_pose,1);
 
-	// ROS_WARN_STREAM("des_pose.pos: \n" << pose.position);
-	ROS_WARN_STREAM("commanding a pose to the robot...\n" << pose.position);
-
 	auto pose_tf = Eigen::make_tf(pose);
-	pose_tf = utils::rotate_to_hand_frame(pose_tf);
 
 	// convert msg to correst geometry_msgs::PoseStamped type
 	geometry_msgs::PoseStamped pose_stamped;
-	pose_stamped.pose = geometry_msgs::make_pose(pose_tf);;
+	pose_stamped.pose = geometry_msgs::make_pose(pose_tf);
 	pose_stamped.header.stamp.sec = ros::Time().sec;
 
 	// send message
 	pub_pose.publish(pose_stamped);
-	
 }
 
 void
@@ -126,7 +96,6 @@ teleop_grasp::command_gripper(const teleop_grasp::GripperState& open_or_close)
 	// ROS_WARN_STREAM("sending command to gripper...");
 
 	actionlib::SimpleActionClient<franka_gripper::MoveAction> action("/franka_gripper/move",true);
-	
 	action.waitForServer();
 
 	// ROS_WARN_STREAM("sending action to gripper...");
@@ -134,17 +103,21 @@ teleop_grasp::command_gripper(const teleop_grasp::GripperState& open_or_close)
 	franka_gripper::MoveAction msg;
 	msg.action_goal.goal.speed = 0.1;
 
-	ROS_WARN_STREAM((open_or_close == teleop_grasp::GripperState::OPEN));
+	// ROS_WARN_STREAM("OPEN? " << bool(open_or_close));
+
+	if (bool(open_or_close) == teleop_grasp::gesture_state_prev )
+		return;
 
 	if (open_or_close == teleop_grasp::GripperState::OPEN)
 	{
-		teleop_grasp::gesture_state = true;
+		teleop_grasp::gesture_state_prev = true;
 		msg.action_goal.goal.width = 0.045;
 		action.sendGoal(msg.action_goal.goal);
 	}
 	else
 	{
-		teleop_grasp::gesture_state = false;
+		// ROS_WARN_STREAM("CLOSING...");
+		teleop_grasp::gesture_state_prev = false;
 		msg.action_goal.goal.width = 0.01;
 		action.sendGoal(msg.action_goal.goal);
 	}
@@ -185,7 +158,7 @@ teleop_grasp::utils::get_current_franka_pose()
 void
 teleop_grasp::utils::set_current_franka_pose(const geometry_msgs::Pose &des_pose)
 {
-		static ros::NodeHandle nh;
+	static ros::NodeHandle nh;
 	static ros::Publisher pub_pose = nh.advertise<geometry_msgs::PoseStamped>("/cartesian_pd_nullspace_controller/command",1);
 
 	// convert msg to correst geometry_msgs::PoseStamped type
@@ -195,18 +168,6 @@ teleop_grasp::utils::set_current_franka_pose(const geometry_msgs::Pose &des_pose
 
 	// send message
 	pub_pose.publish(pose_stamped);
-}
-
-Eigen::Isometry3d
-teleop_grasp::utils::rotate_to_hand_frame(Eigen::Isometry3d tf)
-{
-	// rotate ee of franka to fit world frame
-	// rotate π/2 about y 
-	auto R1 = Eigen::Matrix3d(Eigen::AngleAxisd( M_PI / 2.0, Eigen::Vector3d::UnitY().cast<double>()));
-	// rotate -π/2 about z
-	auto R2 = Eigen::Matrix3d(Eigen::AngleAxisd( -M_PI / 2.0, Eigen::Vector3d::UnitZ().cast<double>()));
-
-	return tf.rotate(R1).rotate(R2);
 }
 
 bool
@@ -219,6 +180,16 @@ teleop_grasp::utils::has_any_change_occurred(const Eigen::Isometry3d& pose1_tf,c
 		return true;
 }
 
+// bool 
+// teleop_grasp::utils::has_too_much_change_occurred(const geometry_msgs::Pose& pose)
+// {
+// 	ROS_WARN_STREAM(" pose bad?! " << pose);
+// 	if (pose.position.x > 1.2 or pose.position.x < -1.2 or pose.position.y > 1.2 or pose.position.y < -1.2 or pose.position.z > 1.5 or pose.position.z < 0.2)
+// 		return true;
+// 	else
+// 		return false;
+// }
+
 bool 
 teleop_grasp::utils::has_too_much_change_occurred(const Eigen::Isometry3d& pose1_tf,const Eigen::Isometry3d& pose2_tf)
 {
@@ -227,4 +198,25 @@ teleop_grasp::utils::has_too_much_change_occurred(const Eigen::Isometry3d& pose1
 		return true;
 	else
 		return false;
+}
+
+geometry_msgs::Pose
+teleop_grasp::utils::restrict_pose(geometry_msgs::Pose pose)
+{
+
+	// if ( has_too_much_change_occurred(pose) )
+	// {
+	// 	ROS_WARN_STREAM("hey i cannot move");
+	// 	return teleop_grasp::calibrate_pose_franka;
+	// }
+
+	pose.position.x = pose.position.x * 2 - 1.0;
+	pose.position.y = pose.position.y * 2 - 1.0;
+
+	pose.position.x = pose.position.x + 0.5;
+	pose.position.z = pose.position.z + 0.2;
+
+	pose.position.y *= -1.0;
+
+	return pose;
 }
