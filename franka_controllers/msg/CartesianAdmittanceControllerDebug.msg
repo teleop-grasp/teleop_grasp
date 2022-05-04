@@ -1,3 +1,5 @@
+std_msgs/Float64MultiArray tau_d
+
 geometry_msgs/Wrench h_e
 geometry_msgs/Vector3 mu_d_e
 

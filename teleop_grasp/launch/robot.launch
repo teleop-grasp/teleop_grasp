@@ -3,7 +3,8 @@
 	<!-- ARGUMENTS -->
 	<!-- see README.md for info -->
 
-	<arg name="sim"         doc="Lanch in simulation environment"        default="true"/>
+	<arg name="robot_ip"    doc="IP address of physical robot"           default=""/>
+	<arg name="sim"         doc="Lanch in simulation environment"        default="$(eval arg('robot_ip') == '')"/>
 	<arg name="arm_id"      doc="Name of the panda robot to spawn"       default="panda"/>
 	<arg name="world"       doc="The Gazebo world to use"                default="workcell.world"/>
 
@@ -13,7 +14,6 @@
 	<arg name="rviz_marker" doc="Launch RVIZ with interactive marker"    default="$(arg rviz)"/>
 	<arg name="plotjuggler" doc="Launch PlotJuggler"                     default="false"/>
 
-	<arg name="robot_ip"    doc="IP address of physical robot"           default=""/>
 
 	<!-- ################################################################################################################# -->
 

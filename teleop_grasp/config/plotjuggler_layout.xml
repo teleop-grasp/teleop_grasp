@@ -1,14 +1,14 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
- <tabbed_widget name="Main Window" parent="main_window">
-  <Tab tab_name="tab1" containers="1">
+ <tabbed_widget parent="main_window" name="Main Window">
+  <Tab containers="1" tab_name="tab1">
    <Container>
-    <DockSplitter orientation="-" count="1" sizes="1">
-     <DockSplitter orientation="|" count="2" sizes="0.5;0.5">
-      <DockSplitter orientation="-" count="2" sizes="0.500255;0.499745">
+    <DockSplitter sizes="1" orientation="-" count="1">
+     <DockSplitter sizes="0.5;0.5" orientation="|" count="2">
+      <DockSplitter sizes="0.333169;0.333663;0.333169" orientation="-" count="3">
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
-         <range left="6.220000" bottom="-100.000000" top="100.000000" right="11.220000"/>
+        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+         <range right="8.160000" left="3.161000" bottom="-100.000000" top="100.000000"/>
          <limitY min="-100" max="100"/>
          <curve color="#ff1900" name="/cartesian_admittance_controller/debug/h_e/force/x"/>
          <curve color="#59d627" name="/cartesian_admittance_controller/debug/h_e/force/y"/>
@@ -16,20 +16,33 @@
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
-         <range left="6.220000" bottom="-100.000000" top="100.000000" right="11.220000"/>
+        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+         <range right="8.160000" left="3.161000" bottom="-100.000000" top="100.000000"/>
          <limitY min="-100" max="100"/>
          <curve color="#ff1900" name="/cartesian_admittance_controller/debug/h_e/torque/x"/>
          <curve color="#59d627" name="/cartesian_admittance_controller/debug/h_e/torque/y"/>
          <curve color="#0078ff" name="/cartesian_admittance_controller/debug/h_e/torque/z"/>
         </plot>
        </DockArea>
+       <DockArea name="...">
+        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+         <range right="8.160000" left="3.161000" bottom="-0.674869" top="0.671276"/>
+         <limitY/>
+         <curve color="#1f77b4" name="/cartesian_admittance_controller/debug/tau_d/data.0"/>
+         <curve color="#d62728" name="/cartesian_admittance_controller/debug/tau_d/data.1"/>
+         <curve color="#1ac938" name="/cartesian_admittance_controller/debug/tau_d/data.2"/>
+         <curve color="#ff7f0e" name="/cartesian_admittance_controller/debug/tau_d/data.3"/>
+         <curve color="#f14cc1" name="/cartesian_admittance_controller/debug/tau_d/data.4"/>
+         <curve color="#9467bd" name="/cartesian_admittance_controller/debug/tau_d/data.5"/>
+         <curve color="#17becf" name="/cartesian_admittance_controller/debug/tau_d/data.6"/>
+        </plot>
+       </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" count="2" sizes="0.500255;0.499745">
-       <DockSplitter orientation="|" count="2" sizes="0.503546;0.496454">
+      <DockSplitter sizes="0.5;0.5" orientation="-" count="2">
+       <DockSplitter sizes="0.502473;0.497527" orientation="|" count="2">
         <DockArea name="...">
-         <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
-          <range left="6.220000" bottom="-2.000000" top="2.000000" right="11.220000"/>
+         <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+          <range right="8.160000" left="3.161000" bottom="-2.000000" top="2.000000"/>
           <limitY min="-2" max="2"/>
           <curve color="#ff1900" name="/cartesian_admittance_controller/debug/p_d/x"/>
           <curve color="#59d627" name="/cartesian_admittance_controller/debug/p_d/y"/>
@@ -37,8 +50,8 @@
          </plot>
         </DockArea>
         <DockArea name="...">
-         <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
-          <range left="6.220000" bottom="-2.000000" top="2.000000" right="11.220000"/>
+         <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+          <range right="8.160000" left="3.161000" bottom="-2.000000" top="2.000000"/>
           <limitY min="-2" max="2"/>
           <curve color="#ff1900" name="/cartesian_admittance_controller/debug/p_c/x"/>
           <curve color="#59d627" name="/cartesian_admittance_controller/debug/p_c/y"/>
@@ -46,10 +59,10 @@
          </plot>
         </DockArea>
        </DockSplitter>
-       <DockSplitter orientation="|" count="2" sizes="0.503546;0.496454">
+       <DockSplitter sizes="0.502473;0.497527" orientation="|" count="2">
         <DockArea name="...">
-         <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
-          <range left="6.220000" bottom="-1.000000" top="1.000000" right="11.220000"/>
+         <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+          <range right="8.160000" left="3.161000" bottom="-1.000000" top="1.000000"/>
           <limitY min="-1" max="1"/>
           <curve color="#ff1900" name="/cartesian_admittance_controller/debug/eps_d/x"/>
           <curve color="#59d627" name="/cartesian_admittance_controller/debug/eps_d/y"/>
@@ -57,8 +70,8 @@
          </plot>
         </DockArea>
         <DockArea name="...">
-         <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
-          <range left="6.220000" bottom="-1.000000" top="1.000000" right="11.220000"/>
+         <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+          <range right="8.160000" left="3.161000" bottom="-1.000000" top="1.000000"/>
           <limitY min="-1" max="1"/>
           <curve color="#ff1900" name="/cartesian_admittance_controller/debug/eps_c/x"/>
           <curve color="#59d627" name="/cartesian_admittance_controller/debug/eps_c/y"/>

@@ -4,6 +4,12 @@ project(franka_controllers)
 # C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_options(-Wall -Wextra -pedantic)
+
+# release mode (unless otherwise specified)
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose Release or Debug" FORCE)
+endif()
 
 # find system libraries
 find_package(Eigen3 REQUIRED)
