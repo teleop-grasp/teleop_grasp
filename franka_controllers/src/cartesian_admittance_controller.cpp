@@ -416,13 +416,17 @@ CartesianAdmittanceController::spatial_impedance(const Eigen::Vector3d& p_d, con
 	// Mo * dw_d_cd + Do * w_d_cd + Ko_ * eps_d_cd = mu_d
 
 	// some lambdas
+	constexpr auto EPS = 1e-6;
 	auto E = [](const auto& eta, const auto& eps) { return eta * Eigen::Matrix3d::Identity() - Eigen::skew(eps); };
 	auto Ad = [](const auto& T) { return (Eigen::Matrix6d() << T.rotation(), Eigen::Matrix3d::Zero(), Eigen::skew(T.translation()) * T.rotation(), T.rotation()).finished(); };
-	auto exp = [](const auto& r) { auto [eta, eps] = std::tuple{ std::cos(r.norm()), (r / r.norm()) * std::sin(r.norm()) }; return Eigen::Quaterniond(eta, eps[0], eps[1], eps[2]); };
+	auto exp = [](const auto& r) { auto [eta, eps] = std::tuple{ std::cos(r.norm()), (r / (r.norm() + EPS)) * std::sin(r.norm()) }; return Eigen::Quaterniond(eta, eps[0], eps[1], eps[2]); };
 
-	static Eigen::Vector3d w_d_cd{}, dw_d_cd{};
+	static Eigen::Vector3d w_d_cd = Eigen::Vector3d::Zero();
+	static Eigen::Vector3d dw_d_cd = Eigen::Vector3d::Zero();
 	static Eigen::Quaterniond quat_d_cd = Eigen::Quaterniond::Identity(); // q = {eta, eps[]}
-	const auto& [eta_cd, eps_d_cd] = std::tuple{ quat_d_cd.coeffs().w(), quat_d_cd.vec() };
+	// const auto& [eta_cd, eps_d_cd] = std::tuple{ quat_d_cd.coeffs().w(), quat_d_cd.vec() };
+	double eta_cd = quat_d_cd.coeffs().w();
+	Eigen::Vector3d eps_d_cd = quat_d_cd.vec();
 	{
 		// wrench transform: mu_d_e = [S(t_d0) * R_d0 R_d0] * h_e;
 		Eigen::Isometry3d T_d = Eigen::Translation3d(p_d) * Eigen::Isometry3d(R_d);
