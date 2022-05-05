@@ -48,8 +48,8 @@ cartesian_admittance_controller:
         - $(arg arm_id)_joint6
         - $(arg arm_id)_joint7
 
-    kp: [200, 200, 200, 100, 100, 100] # stiffness
-    kd: [30, 30, 30, 15, 15, 15] # dampening
+    kp: [200, 200, 200, 10, 10, 10] # stiffness
+    kd: [28.3, 28.3, 28.3, 6.3, 6.3, 6.3] # dampening
 
     Kp: [200, 200, 200]
     Ko: [100, 100, 100]
