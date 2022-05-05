@@ -4,6 +4,7 @@ project(franka_controllers)
 # C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS -fno-fast-math)
 add_compile_options(-Wall -Wextra -pedantic)
 
 # release mode (unless otherwise specified)

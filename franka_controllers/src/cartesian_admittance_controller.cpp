@@ -245,7 +245,7 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	auto [p_c, R_c, dp_c, w_c, ddp_c, dw_c] = spatial_impedance(p_d, R_d, dp_d, w_d, ddp_d, dw_d, h_e, dt);
 
 	// position and orientation control, a ∈ [6x1]
-	auto a = pos_ori_control(p_c, p_e, R_c, R_e, dp_c, dp_e, w_c, w_e, ddp_c, dw_c);
+	Eigen::Vector6d a = pos_ori_control(p_c, p_e, R_c, R_e, dp_c, dp_e, w_c, w_e, ddp_c, dw_c);
 
 	// -------------------------------------------------------------------
 
@@ -254,7 +254,7 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 
 	Eigen::Vector3d p_ce = p_c - p_e;
 	Eigen::Matrix3d R_ec = R_e.transpose() * R_c;
-	Eigen::Vector3d eps_e_ce = Eigen::Vector3d(Eigen::Quaterniond(R_ec).vec()); // must explitcly state Vector3d, otherwise blyat
+	Eigen::Vector3d eps_e_ce = Eigen::Quaterniond(R_ec).vec(); // must explitcly state Vector3d, otherwise blyat
 	Eigen::Vector3d eps_ce = R_e * eps_e_ce; // to base frame
 	Eigen::Vector6d x_ce = (Eigen::Vector6d() << p_ce, eps_ce).finished();
 
@@ -271,7 +271,7 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	// Eigen::Matrix6d Kv = (Eigen::Vector6d() << kvp, kvp, kvp, kvo, kvo, kvo).finished().asDiagonal();
 	// Eigen::Vector7d tau_task = J.transpose() * (Kp * x_ce + Kv * dx_ce);
 
-	// Eigen::Vector7d tau_task = J.transpose() * (kp * x_ce + kd * dx_ce);
+	Eigen::Vector7d tau_task = J.transpose() * (kp * x_ce + kd * dx_ce);
 	// Eigen::Vector7d tau_task = J.transpose() * (kp * x_err + kd * dx_err);
 
 	// nullspace torque (https://studywolf.wordpress.com/2013/09/17/robot-control-5-controlling-in-the-null-space/)
@@ -291,12 +291,12 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 
 	// desired task-space torque (inverse dynamics)
 	// tau_m = M * J_pinv * (a - dJ * dq) + c + g;
-	Eigen::Matrix7x6d J_pinv = Eigen::pseudo_inverse(J, 0.2);
-	Eigen::Vector7d tau_m = M * J_pinv * (a - dJ * dq) + c; // no "+ g(q)" since Franka compensates gravity
+	// Eigen::Matrix7x6d J_pinv = Eigen::pseudo_inverse(J, 0.2);
+	// Eigen::Vector7d tau_m = M * J_pinv * (a - dJ * dq) + c; // no "+ g(q)" since Franka compensates gravity
 
 	// desired joint torque
-	Eigen::Vector7d tau_d = tau_m + tau_null;
-	// Eigen::Vector7d tau_d = tau_task + tau_null + c;
+	// Eigen::Vector7d tau_d = tau_m + tau_null;
+	Eigen::Vector7d tau_d = tau_task + tau_null + c;
 
 	// saturate rate-of-effort (rotatum)
 	if (dtau_max > 0)
@@ -305,7 +305,12 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	// set desired command on joint handles
 	for (size_t i = 0; i < num_joints; ++i)
 	{
-		assert(not std::isnan(std::abs((tau_d[i]))));
+		// assert(not std::isnan(std::abs((tau_d[i]))));
+		if (std::isnan(tau_d[i]))
+		{
+			ROS_ERROR_STREAM("tau_d[" << i << "] is NaN: " << tau_d[i]);
+			tau_d[i] = 0.;
+		}
 		joint_handles[i].setCommand(tau_d[i]);
 	}
 
@@ -369,11 +374,11 @@ CartesianAdmittanceController::get_robot_dynamics(const Eigen::Vector7d& /* q */
 {
 	RobotDynamics dyn =
 	{
-		.J = Eigen::Matrix6x7d::Map(model_handle->getZeroJacobian(franka::Frame::kEndEffector).data()),
-		.dJ = Eigen::Matrix6x7d(),
-		.M = Eigen::Matrix7d::Map(model_handle->getMass().data()),
-		.c = Eigen::Vector7d(model_handle->getCoriolis().data()), // c = C*dq
-		.g = Eigen::Vector7d(model_handle->getGravity().data())
+		Eigen::Matrix6x7d::Map(model_handle->getZeroJacobian(franka::Frame::kEndEffector).data()), // J
+		Eigen::Matrix6x7d(), // dJ
+		Eigen::Matrix7d::Map(model_handle->getMass().data()), // M 
+		Eigen::Vector7d(model_handle->getCoriolis().data()), // c = C*dq
+		Eigen::Vector7d(model_handle->getGravity().data()) // g 
 	};
 
 	// jacobian derivative
