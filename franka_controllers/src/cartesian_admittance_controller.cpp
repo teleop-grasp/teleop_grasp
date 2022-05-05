@@ -318,6 +318,7 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	if (mtx_msg_debug.try_lock())
 	{
 		msg_debug.tau_d.data = std::vector<double>(tau_d.data(), tau_d.data() + tau_d.size());
+		tf::vectorEigenToMsg(p_ce, msg_debug.p_diff);
 		mtx_msg_debug.unlock();
 	}
 
@@ -404,8 +405,6 @@ CartesianAdmittanceController::spatial_impedance(const Eigen::Vector3d& p_d, con
 	// Mp * ddp_cd + Dp * dp_cd + Kp * p_cd = f_e
 
 	static Eigen::Vector3d ddp_cd{}, dp_cd{}, p_cd;
-	ROS_WARN_STREAM_ONCE("p_cd: " << p_cd.transpose());
-	ROS_WARN_STREAM_ONCE("ddp_cd: " << ddp_cd.transpose());
 	{
 		ddp_cd = Mp.inverse() * (f_e - Dp * dp_cd - Kp * p_cd);
 		dp_cd = dp_cd + dt * ddp_cd;

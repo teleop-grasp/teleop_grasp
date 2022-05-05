@@ -12,3 +12,5 @@ geometry_msgs/Vector3 p_c
 geometry_msgs/Vector3 eps_c
 geometry_msgs/Vector3 dp_c
 geometry_msgs/Vector3 w_c
+
+geometry_msgs/Vector3 p_diff
