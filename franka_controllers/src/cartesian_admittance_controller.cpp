@@ -198,7 +198,6 @@ CartesianAdmittanceController::starting(const ros::Time& /* time */)
 {
 	// set equilibrium point to current state
 	pose_d = Pose{ get_robot_state().p_e, get_robot_state().R_e };
-	// buffer_pose_ref.writeFromNonRT(pose_d);
 	buffer_pose_ref.initRT(pose_d);
 
 	// set desired nullspace to initial robot state
@@ -220,6 +219,17 @@ CartesianAdmittanceController::starting(const ros::Time& /* time */)
 		<< "\n\n[eta, eps]: [" << Eigen::Quaterniond(T_d.rotation()).w() << ", " << Eigen::Quaterniond(T_d.rotation()).vec().transpose() << "]"
 		<< "\n\n[x, y, z, w]: " << Eigen::Quaterniond(T_d.rotation()).coeffs().transpose()
 	);
+
+	const franka::RobotState robot_state = state_handle->getRobotState();
+	Eigen::Isometry3d O_T_EE = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
+	Eigen::Isometry3d EE_T_K = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.EE_T_K.data()));
+	Eigen::Isometry3d NE_T_EE = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.NE_T_EE.data()));
+	Eigen::Isometry3d O_T_NE = O_T_EE * NE_T_EE.inverse();
+
+	ROS_WARN_STREAM("Loaded frames:\n");
+	std::cout << "\nO_T_EE:\n\n" << O_T_EE.matrix() << std::endl;
+	std::cout << "\nEE_T_K:\n\n" << EE_T_K.matrix() << std::endl;
+	std::cout << "\nO_T_NE:\n\n" << O_T_NE.matrix() << std::endl;
 }
 
 void
@@ -227,15 +237,12 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 {
 	// controller loop
 	// pose, twist etc. are given by p ∈ [3x1], R ∈ [3x3], w ∈ [3x1]
-	// FrankaHWSim will automatically compensate its gravity (https://frankaemika.github.io/docs/franka_ros.html?highlight=gravity#jointstateinterface)
+	// FrankaHWSim will automatically compensate gravity (https://frankaemika.github.io/docs/franka_ros.html?highlight=gravity#jointstateinterface)
 
 	// elapsed time
 	static ros::Duration elapsed_time{0.};
-	double dt = period.toSec();
+	double dt = (period.toSec() < 1e-7) ? 0.001 : period.toSec(); // ensure dt > 0
 	elapsed_time += period;
-
-	if (dt != 0.001)
-		ROS_ERROR_STREAM("dt = " << dt);
 
 	// update dynamics parameters
 	// this->dynamic_reconfigure_parameters();
@@ -250,29 +257,30 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	auto [p_e, R_e, q, dq, h_e] = get_robot_state();
 	auto [J, dJ, M, c, g] = get_robot_dynamics(q, dq, dt);
 	Eigen::Vector6d dx_e = J * dq;
+	// auto [dp_e, w_e] = std::tuple{ dx_e.head(3), dx_e.tail(3) };
 	auto [dp_e, w_e] = std::tuple{ Eigen::Vector3d(dx_e.head(3)), Eigen::Vector3d(dx_e.tail(3)) };
 
 	// spatial impedance (compliant frame)
 	auto [p_c, R_c, dp_c, w_c, ddp_c, dw_c] = spatial_impedance(p_d, R_d, dp_d, w_d, ddp_d, dw_d, h_e, dt);
 
 	// position and orientation control, a ∈ [6x1]
-	// Eigen::Vector6d a = pos_ori_control(p_c, p_e, R_c, R_e, dp_c, dp_e, w_c, w_e, ddp_c, dw_c);
+	Eigen::Vector6d a = pos_ori_control(p_c, p_e, R_c, R_e, dp_c, dp_e, w_c, w_e, ddp_c, dw_c);
 
 	// -------------------------------------------------------------------
 
 	// compute errors (in base frame)
 	// x = [p, eps], dx = [dp, w]
 
-	// Eigen::Vector3d p_ce = p_c - p_e;
-	// Eigen::Matrix3d R_ec = R_e.transpose() * R_c;
-	// Eigen::Vector3d eps_e_ce = Eigen::Quaterniond(R_ec).vec(); // must explitcly state Vector3d, otherwise blyat
-	// Eigen::Vector3d eps_ce = R_e * eps_e_ce; // to base frame
-	// Eigen::Vector6d x_ce = (Eigen::Vector6d() << p_ce, eps_ce).finished();
+	Eigen::Vector3d p_ce = p_c - p_e;
+	Eigen::Matrix3d R_ec = R_e.transpose() * R_c;
+	Eigen::Vector3d eps_e_ce = Eigen::Quaterniond(R_ec).vec();
+	Eigen::Vector3d eps_ce = R_e * eps_e_ce; // to base frame
+	Eigen::Vector6d x_ce = (Eigen::Vector6d() << p_ce, eps_ce).finished();
 
-	// Eigen::Vector6d dx_c = (Eigen::Vector6d() << dp_c, w_c).finished();
-	// Eigen::Vector6d dx_ce = dx_c - dx_e;
+	Eigen::Vector6d dx_c = (Eigen::Vector6d() << dp_c, w_c).finished();
+	Eigen::Vector6d dx_ce = dx_c - dx_e;
+	// Eigen::Vector6d dx_ce = Eigen::Vector6d::Zero() - dx_e; // no desired velocity
 
-	// auto [T_e, T_d, T_c] = std::tuple{ Eigen::Translation3d(p_e) * Eigen::Isometry3d(R_e), Eigen::Translation3d(p_d) * Eigen::Isometry3d(R_d), Eigen::Translation3d(p_c) * Eigen::Isometry3d(R_c) };
 	Eigen::Isometry3d T_e = Eigen::Translation3d(p_e) * Eigen::Isometry3d(R_e);
 	Eigen::Isometry3d T_d = Eigen::Translation3d(p_d) * Eigen::Isometry3d(R_d);
 	Eigen::Isometry3d T_c = Eigen::Translation3d(p_c) * Eigen::Isometry3d(R_c);
@@ -282,17 +290,19 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 
 	// cartesian torque
 	// Eigen::Vector7d tau_task = J.transpose() * (kp * x_ce + kd * dx_ce);
-	Eigen::Vector7d tau_task = J.transpose() * (kp * x_err + kd * dx_err);
+	// Eigen::Vector7d tau_task = J.transpose() * (kp * x_err + kd * dx_err);
+
+	// desired task-space torque (inverse dynamics)
+	// Eigen::Matrix7x6d J_pinv = Eigen::pseudo_inverse(J, 0.4);
+	Eigen::Matrix7x6d J_pinv = M.inverse() * J.transpose() * (J * M.inverse() * J.transpose()).inverse();
+	Eigen::Vector7d tau_task = M * J_pinv * (a - dJ * dq);
+	// Eigen::Vector7d tau_task = M * J_pinv * (a - dJ * dq) + J.transpose() * h_e;
 
 	// nullspace torque (https://studywolf.wordpress.com/2013/09/17/robot-control-5-controlling-in-the-null-space/)
 	Eigen::Matrix6x7d J_T_pinv = Eigen::pseudo_inverse(J.transpose(), 0.2); // damped pseudo inverse
 	Eigen::Matrix7d I7x7d = Eigen::Matrix7d::Identity();
 	double kc = 2.0 * sqrt(kn); // damping ratio of 1.0
 	Eigen::Vector7d tau_null = (I7x7d - J.transpose() * J_T_pinv) * (kn * (qN_d - q) - kc * dq);
-
-	// desired task-space torque (inverse dynamics)
-	// Eigen::Matrix7x6d J_pinv = Eigen::pseudo_inverse(J, 0.2);
-	// Eigen::Vector7d tau_task = M * J_pinv * (a - dJ * dq) + c; // no "+ g(q)" since Franka compensates gravity
 
 	// desired joint torque
 	Eigen::Vector7d tau_d = tau_task + tau_null + c;
@@ -355,9 +365,11 @@ CartesianAdmittanceController::get_robot_state()
 	const franka::RobotState robot_state = state_handle->getRobotState();
 	Eigen::Isometry3d T_e = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
 
-	// Eigen::Matrix6x7d J = Eigen::Matrix6x7d::Map(model_handle->getZeroJacobian(franka::Frame::kEndEffector).data());
-	// Eigen::Vector7d tau_ext = Eigen::Vector7d(robot_state.tau_ext_hat_filtered.data());
-	// Eigen::Vector6d h_e = Eigen::pseudo_inverse(J.transpose(), 0.2) * tau_ext;
+	Eigen::Matrix6x7d J = Eigen::Matrix6x7d::Map(model_handle->getZeroJacobian(franka::Frame::kEndEffector).data());
+	Eigen::Vector7d tau_ext = Eigen::Vector7d(robot_state.tau_ext_hat_filtered.data());
+	Eigen::Vector6d h_e = Eigen::pseudo_inverse(J.transpose(), 0.2) * tau_ext;
+	// h_e *= -1; // invert because fuck it
+	// h_e.head(3) = -h_e.head(3);
 
 	return
 	{
@@ -365,7 +377,8 @@ CartesianAdmittanceController::get_robot_state()
 		T_e.rotation(),
 		Eigen::Vector7d(robot_state.q.data()),
 		Eigen::Vector7d(robot_state.dq.data()),
-		Eigen::Vector6d(robot_state.O_F_ext_hat_K.data()) // estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the base frame
+		h_e
+		// Eigen::Vector6d(robot_state.O_F_ext_hat_K.data()) // estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the base frame
 	};
 }
 
@@ -375,7 +388,7 @@ CartesianAdmittanceController::get_robot_dynamics(const Eigen::Vector7d& /* q */
 	RobotDynamics dyn =
 	{
 		Eigen::Matrix6x7d::Map(model_handle->getZeroJacobian(franka::Frame::kEndEffector).data()), // J
-		Eigen::Matrix6x7d(), // dJ
+		Eigen::Matrix6x7d::Zero(), // dJ
 		Eigen::Matrix7d::Map(model_handle->getMass().data()), // M
 		Eigen::Vector7d(model_handle->getCoriolis().data()), // c = C*dq
 		Eigen::Vector7d(model_handle->getGravity().data()) // g
@@ -398,12 +411,16 @@ CartesianAdmittanceController::spatial_impedance(const Eigen::Vector3d& p_d, con
 	// (https://en.wikipedia.org/wiki/Numerical_methods_for_ordinary_differential_equations#Euler_method)
 
 	// end-effector wrench
+	// auto [f_e, mu_e] = std::tuple{ h_e.head(3), h_e.tail(3) };
 	auto [f_e, mu_e] = std::tuple{ Eigen::Vector3d(h_e.head(3)), Eigen::Vector3d(h_e.tail(3)) };
 
 	// translation
 	// Mp * ddp_cd + Dp * dp_cd + Kp * p_cd = f_e
 
-	static Eigen::Vector3d ddp_cd{}, dp_cd{}, p_cd;
+	// static Eigen::Vector3d p_cd{}, dp_cd{}, ddp_cd{};
+	static Eigen::Vector3d p_cd = Eigen::Vector3d::Zero();
+	static Eigen::Vector3d dp_cd = Eigen::Vector3d::Zero();
+	static Eigen::Vector3d ddp_cd = Eigen::Vector3d::Zero();
 	{
 		ddp_cd = Mp.inverse() * (f_e - Dp * dp_cd - Kp * p_cd);
 		dp_cd = dp_cd + dt * ddp_cd;
@@ -414,11 +431,15 @@ CartesianAdmittanceController::spatial_impedance(const Eigen::Vector3d& p_d, con
 	// Mo * dw_d_cd + Do * w_d_cd + Ko_ * eps_d_cd = mu_d
 
 	// some lambdas
-	constexpr auto EPS = 1e-6;
 	auto E = [](const auto& eta, const auto& eps) { return eta * Eigen::Matrix3d::Identity() - Eigen::skew(eps); };
 	auto Ad = [](const auto& T) { return (Eigen::Matrix6d() << T.rotation(), Eigen::Matrix3d::Zero(), Eigen::skew(T.translation()) * T.rotation(), T.rotation()).finished(); };
-	auto exp = [](const auto& r) { auto [eta, eps] = std::tuple{ std::cos(r.norm()), (r / (r.norm() + EPS)) * std::sin(r.norm()) }; return Eigen::Quaterniond(eta, eps[0], eps[1], eps[2]); };
+	auto exp = [](const Eigen::Vector3d& r)
+	{
+		auto [eta, eps] = std::tuple{ std::cos(r.norm()), Eigen::Vector3d((r / (r.norm() + 1e-7)) * std::sin(r.norm())) };
+		return Eigen::Quaterniond(eta, eps.x(), eps.y(), eps.z()); // [w, x, y, z]
+	};
 
+	// static Eigen::Vector3d w_d_cd{}, dw_d_cd{};
 	static Eigen::Vector3d w_d_cd = Eigen::Vector3d::Zero();
 	static Eigen::Vector3d dw_d_cd = Eigen::Vector3d::Zero();
 	static Eigen::Quaterniond quat_d_cd = Eigen::Quaterniond::Identity(); // q = {eta, eps[]}
@@ -427,8 +448,8 @@ CartesianAdmittanceController::spatial_impedance(const Eigen::Vector3d& p_d, con
 	Eigen::Vector3d eps_d_cd = quat_d_cd.vec();
 	{
 		// wrench transform: mu_d_e = [S(t_d0) * R_d0 R_d0] * h_e;
-		Eigen::Isometry3d T_d = Eigen::Translation3d(p_d) * Eigen::Isometry3d(R_d);
-		Eigen::Vector3d mu_d_e = Ad(T_d).bottomRows(3) * h_e;
+		Eigen::Isometry3d T_d0 = (Eigen::Translation3d(p_d) * Eigen::Isometry3d(R_d)).inverse();
+		Eigen::Vector3d mu_d_e = Ad(T_d0).bottomRows(3) * h_e;
 
 		// integration
 		Eigen::Matrix3d Ko_ = 2 * E(eta_cd, eps_d_cd).transpose() * Ko;
@@ -446,7 +467,7 @@ CartesianAdmittanceController::spatial_impedance(const Eigen::Vector3d& p_d, con
 
 	Eigen::Vector3d p_c = p_cd + p_d;
 	Eigen::Vector3d dp_c = dp_cd + dp_d;
-	Eigen::Vector3d ddp_c = ddp_cd - ddp_d;
+	Eigen::Vector3d ddp_c = ddp_cd + ddp_d;
 
 	// orientation:
 	// q_d_cd = ..
@@ -505,11 +526,8 @@ CartesianAdmittanceController::saturate_rotatum(const Eigen::Vector7d& tau_d, co
 	// compute saturated torque
 	for (auto i = 0; i < tau_d_sat.size(); ++i)
 	{
-		// const double dtau = (tau_d[i] - tau_d_prev[i]) / dt; // dtau/dt
-		// tau_d_sat[i] = tau_d_prev[i] + std::max(std::min(dtau * dt, dtau_max * dt), -(dtau_max * dt));
-		double difference = tau_d[i] - tau_d_prev[i];
-		double delta_tau_max_ = 1.0;
-		tau_d_sat[i] = tau_d_prev[i] + std::max(std::min(difference, delta_tau_max_), -delta_tau_max_);
+		const double dtau = (tau_d[i] - tau_d_prev[i]) / dt; // dtau/dt
+		tau_d_sat[i] = tau_d_prev[i] + std::max(std::min(dtau * dt, dtau_max * dt), -(dtau_max * dt));
 	}
 
 	// save for next iteration and return
@@ -522,7 +540,6 @@ CartesianAdmittanceController::get_pose_error(const Eigen::Isometry3d& T_e, cons
 {
 	// const auto& [p_e, p_d] = std::tuple{ T_e.translation(), T_d.translation() };
 	// const auto& [R_e, R_d] = std::tuple{ T_e.rotation(), T_d.rotation() };
-
 	Eigen::Vector3d p_e = T_e.translation();
 	Eigen::Vector3d p_d = T_d.translation();
 	Eigen::Matrix3d R_e = T_e.rotation();
@@ -538,7 +555,7 @@ CartesianAdmittanceController::get_pose_error(const Eigen::Isometry3d& T_e, cons
 	// R_12 = (eta_21, eps_1_21) = (eta_21, eps_2_21)
 
 	Eigen::Matrix3d R_ed = R_e.transpose() * R_d;
-	Eigen::Vector3d eps_e_de = Eigen::Vector3d(Eigen::Quaterniond(R_ed).vec());
+	Eigen::Vector3d eps_e_de = Eigen::Quaterniond(R_ed).vec();
 	Eigen::Vector3d eps_de = R_e * eps_e_de; // to base frame
 
 	// error vector [6 x 1]
