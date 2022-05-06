@@ -224,12 +224,14 @@ CartesianAdmittanceController::starting(const ros::Time& /* time */)
 	Eigen::Isometry3d O_T_EE = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
 	Eigen::Isometry3d EE_T_K = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.EE_T_K.data()));
 	Eigen::Isometry3d NE_T_EE = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.NE_T_EE.data()));
+	Eigen::Isometry3d F_T_NE = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.F_T_NE.data()));
 	Eigen::Isometry3d O_T_NE = O_T_EE * NE_T_EE.inverse();
 
 	ROS_WARN_STREAM("Loaded frames:\n");
 	std::cout << "\nO_T_EE:\n\n" << O_T_EE.matrix() << std::endl;
 	std::cout << "\nEE_T_K:\n\n" << EE_T_K.matrix() << std::endl;
 	std::cout << "\nO_T_NE:\n\n" << O_T_NE.matrix() << std::endl;
+	std::cout << "\nF_T_NE:\n\n" << F_T_NE.matrix() << std::endl;
 }
 
 void
@@ -265,6 +267,7 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 
 	// position and orientation control, a ∈ [6x1]
 	Eigen::Vector6d a = pos_ori_control(p_c, p_e, R_c, R_e, dp_c, dp_e, w_c, w_e, ddp_c, dw_c);
+	// Eigen::Vector6d a = pos_ori_control(p_d, p_e, R_d, R_e, dp_d, dp_e, w_d, w_e, ddp_d, dw_d);
 
 	// -------------------------------------------------------------------
 
@@ -432,7 +435,7 @@ CartesianAdmittanceController::spatial_impedance(const Eigen::Vector3d& p_d, con
 
 	// some lambdas
 	auto E = [](const auto& eta, const auto& eps) { return eta * Eigen::Matrix3d::Identity() - Eigen::skew(eps); };
-	auto Ad = [](const auto& T) { return (Eigen::Matrix6d() << T.rotation(), Eigen::Matrix3d::Zero(), Eigen::skew(T.translation()) * T.rotation(), T.rotation()).finished(); };
+	auto Ad = [](const Eigen::Isometry3d& T) { return (Eigen::Matrix6d() << T.rotation(), Eigen::Matrix3d::Zero(), Eigen::skew(T.translation()) * T.rotation(), T.rotation()).finished(); };
 	auto exp = [](const Eigen::Vector3d& r)
 	{
 		auto [eta, eps] = std::tuple{ std::cos(r.norm()), Eigen::Vector3d((r / (r.norm() + 1e-7)) * std::sin(r.norm())) };
@@ -505,7 +508,7 @@ CartesianAdmittanceController::pos_ori_control(const Eigen::Vector3d& p_c, const
 
 	// orientation error
 	Eigen::Matrix3d R_ec = R_e.transpose() * R_c;
-	Eigen::Vector3d eps_e_ce = Eigen::Vector3d(Eigen::Quaterniond(R_ec).vec()); // must explitcly state Vector3d, otherwise blyat
+	Eigen::Vector3d eps_e_ce = Eigen::Quaterniond(R_ec).vec();
 	Eigen::Vector3d eps_ce = R_e * eps_e_ce; // to base frame
 	Eigen::Vector3d w_ce = w_c - w_e;
 

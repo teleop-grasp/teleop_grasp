@@ -52,16 +52,16 @@ cartesian_admittance_controller:
     kd: [28.3, 28.3, 28.3, 6.3, 6.3, 6.3] # dampening
 
     Kp: [400, 400, 400]
-    Ko: [400, 400, 400]
-    Dp: [20, 20, 20]
-    Do: [20, 20, 20]
+    Ko: [200, 200, 200]
+    Dp: [40, 40, 40]
+    Do: [28.28, 28.28, 28.28]
     Mp: [1, 1, 1]
     Mo: [1, 1, 1]
 
     kpp: 200
-    kpo: 10
+    kpo: 100
     kvp: 28.3
-    kvo: 6.3
+    kvo: 40
     kn: 0.5 # nullspace stiffness
     # kc: 2 * sqrt(kn) # for damping ratio of 1.0 (set in C++)
 
