@@ -18,9 +18,9 @@ main(int argc, char** argv)
 	ros::NodeHandle nh;
 
 	// load topics
-	auto topic_grasp_state      = ros::param::param<std::string>("~topic_grasp_state","");
-	auto topic_pose_hand        = ros::param::param<std::string>("~topic_pose_hand","");
-	auto topic_franka_pose_ee   = ros::param::param<std::string>("~topic_franka_pose_ee","");
+	auto topic_grasp_state    = ros::param::param<std::string>("~topic_grasp_state","");
+	auto topic_pose_hand      = ros::param::param<std::string>("~topic_pose_hand","");
+	auto topic_franka_pose_ee = ros::param::param<std::string>("~topic_franka_pose_ee","");
 
 	ros::Subscriber sub_grasp = nh.subscribe<std_msgs::Bool>( topic_grasp_state, 1, [&](const auto& msg){ teleop_grasp::gesture_state = (*msg).data; });
 	ros::Subscriber sub_pose  = nh.subscribe<geometry_msgs::Pose>( topic_pose_hand, 1, [&](const auto& msg){ teleop_grasp::pose_hand = *msg;}); 
@@ -32,6 +32,8 @@ main(int argc, char** argv)
 
 	while (ros::ok()) 
 	{
+
+		ROS_WARN_STREAM("received pose: \n" << teleop_grasp::pose_hand);
 
 		// if the hand is open, open the gripper, otherwise close the gripper.
 		auto gripper_state = (teleop_grasp::gesture_state) ? teleop_grasp::GripperState::OPEN : teleop_grasp::GripperState::CLOSE;

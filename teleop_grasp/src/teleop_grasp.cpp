@@ -6,6 +6,7 @@
 #include "ros/param.h"
 #include "ros_utils/geometry_msgs.h"
 #include <cmath>
+#include <cstdint>
 #include <teleop_grasp/teleop_grasp.h>
 #include <ros_utils/eigen.h>
 
@@ -30,6 +31,8 @@ teleop_grasp::calibrate()
 
 	command_pose_robot(teleop_grasp::calibrate_pose_franka);
 
+	teleop_grasp::pose_ee = utils::get_current_franka_pose();
+
 	// calibration completed
 	ROS_WARN_STREAM("calibration has been completed...");
 }
@@ -38,39 +41,50 @@ geometry_msgs::Pose
 teleop_grasp::compute_desired_ee_pose()
 {
 
-	// auto pose_hand_tf      = Eigen::make_tf(teleop_grasp::pose_hand);
-	// auto pose_hand_prev_tf = Eigen::make_tf(teleop_grasp::pose_hand_prev);
+	auto pose_hand_tf      = Eigen::make_tf(teleop_grasp::pose_hand);
+	auto pose_hand_prev_tf = Eigen::make_tf(teleop_grasp::pose_hand_prev);
 
-	// // compute diff transform from prev hand pose to current hand pose
-	// auto d_pose_tf = pose_hand_prev_tf.inverse() * pose_hand_tf;
+	// compute diff transform from prev hand pose to current hand pose
+	auto d_pose_tf = pose_hand_prev_tf.inverse() * pose_hand_tf;
+	ROS_WARN_STREAM("relative change...: \n" << d_pose_tf.matrix());
 
-	// // if the velocity becomes too large
-	// if ( utils::has_too_much_change_occurred(pose_hand_prev_tf, pose_hand_tf)  )
-	// {
-	// 	ROS_WARN_STREAM("velocity too large...");
-	// 	d_pose_tf = Eigen::Isometry3d::Identity();
-	// 	return geometry_msgs::make_pose( pose_hand_tf );
-	// }
+	// if the velocity becomes too large, often meaning the hand has moved off screen.
+	if ( utils::has_too_much_change_occurred(geometry_msgs::make_pose(d_pose_tf))  ) 
+	{
+		ROS_WARN_STREAM("velocity too large... returning to start pose...");
+		return teleop_grasp::calibrate_pose_franka;
+	}
 
-	// // if no changes are made to the pose, this is caused by the hand moving outside the camera's view
-	// if ( utils::has_any_change_occurred(pose_hand_prev_tf, pose_hand_tf) )
-	// {
-	// 	ROS_WARN_STREAM("no changes are made...");
-	// 	d_pose_tf = Eigen::Isometry3d::Identity();
-	// 	return geometry_msgs::make_pose( pose_hand_tf );
-	// }
+	// auto T_o_ee    = Eigen::make_tf( utils::get_current_franka_pose() );
+	// auto T_o_hand  = Eigen::make_tf( teleop_grasp::pose_hand );
+	// auto T_hand_o  = T_o_hand.inverse();
+	// auto T_hand_ee = T_hand_o * T_o_ee;
+	// auto T_ee_ee_new = T_o_ee * T_hand_ee.inverse();
+
+	// // rotate such that the ee aligns nicely with hand pose
+	// auto R_hand_ee = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
+	// T_hand_ee = T_ee_ee_new * R_hand_ee;
+
+	// auto pos_hand_ee_res = utils::restrict_pose( geometry_msgs::make_pose( T_hand_ee ) );
+
 
 	auto T1 = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
 	auto T2 = Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitZ());
 
 	teleop_grasp::pose_hand_prev = teleop_grasp::pose_hand;
 
-	teleop_grasp::pose_hand.orientation = geometry_msgs::make_pose( Eigen::make_tf( teleop_grasp::calibrate_pose_franka ) ).orientation;
+	Eigen::Isometry3d mirror;
+	mirror.setIdentity();
+	mirror.rotate(Eigen::make_tf(teleop_grasp::pose_hand).rotation());
+
+	teleop_grasp::pose_hand.orientation = geometry_msgs::make_pose( Eigen::make_tf(teleop_grasp::pose_hand) * T1 * mirror ).orientation;
+
 	teleop_grasp::pose_hand = teleop_grasp::utils::restrict_pose(teleop_grasp::pose_hand);
 
 	ROS_WARN_STREAM("finished hand pose = \n" << teleop_grasp::pose_hand);
-
 	return teleop_grasp::pose_hand;
+
+	// return pos_hand_ee_res;
 }
 
 void
@@ -93,30 +107,27 @@ teleop_grasp::command_pose_robot(const geometry_msgs::Pose& pose, const std::str
 void
 teleop_grasp::command_gripper(const teleop_grasp::GripperState& open_or_close)
 {
-	// ROS_WARN_STREAM("sending command to gripper...");
-
 	actionlib::SimpleActionClient<franka_gripper::MoveAction> action("/franka_gripper/move",true);
 	action.waitForServer();
 
-	// ROS_WARN_STREAM("sending action to gripper...");
+	ROS_WARN_STREAM("sending action to gripper...");
 
 	franka_gripper::MoveAction msg;
 	msg.action_goal.goal.speed = 0.1;
-
-	// ROS_WARN_STREAM("OPEN? " << bool(open_or_close));
 
 	if (bool(open_or_close) == teleop_grasp::gesture_state_prev )
 		return;
 
 	if (open_or_close == teleop_grasp::GripperState::OPEN)
 	{
+		ROS_INFO("Opening gripper...");
 		teleop_grasp::gesture_state_prev = true;
 		msg.action_goal.goal.width = 0.045;
 		action.sendGoal(msg.action_goal.goal);
 	}
 	else
 	{
-		// ROS_WARN_STREAM("CLOSING...");
+		ROS_INFO("Closing gripper...");
 		teleop_grasp::gesture_state_prev = false;
 		msg.action_goal.goal.width = 0.01;
 		action.sendGoal(msg.action_goal.goal);
@@ -170,6 +181,17 @@ teleop_grasp::utils::set_current_franka_pose(const geometry_msgs::Pose &des_pose
 	pub_pose.publish(pose_stamped);
 }
 
+
+bool 
+teleop_grasp::utils::has_any_change_occurred(const geometry_msgs::Pose& d_pose)
+{
+	ROS_WARN_STREAM(" d_pose bad?! " << d_pose);
+	if ( std::abs(d_pose.position.x) < teleop_grasp::CHANGE_THRESHOLD or std::abs(d_pose.position.y) < teleop_grasp::CHANGE_THRESHOLD or std::abs(d_pose.position.z) < teleop_grasp::CHANGE_THRESHOLD)
+		return true;
+	else
+		return false;
+}
+
 bool
 teleop_grasp::utils::has_any_change_occurred(const Eigen::Isometry3d& pose1_tf,const Eigen::Isometry3d& pose2_tf )
 {
@@ -180,15 +202,15 @@ teleop_grasp::utils::has_any_change_occurred(const Eigen::Isometry3d& pose1_tf,c
 		return true;
 }
 
-// bool 
-// teleop_grasp::utils::has_too_much_change_occurred(const geometry_msgs::Pose& pose)
-// {
-// 	ROS_WARN_STREAM(" pose bad?! " << pose);
-// 	if (pose.position.x > 1.2 or pose.position.x < -1.2 or pose.position.y > 1.2 or pose.position.y < -1.2 or pose.position.z > 1.5 or pose.position.z < 0.2)
-// 		return true;
-// 	else
-// 		return false;
-// }
+bool 
+teleop_grasp::utils::has_too_much_change_occurred(const geometry_msgs::Pose& d_pose)
+{
+	ROS_WARN_STREAM(" d_pose bad?! " << d_pose);
+	if ( std::abs(d_pose.position.x) > teleop_grasp::MAX_LIN_VELOCITY or std::abs(d_pose.position.y) > teleop_grasp::MAX_LIN_VELOCITY) //or std::abs(d_pose.position.z) > teleop_grasp::MAX_LIN_VELOCITY)
+		return true;
+	else
+		return false;
+}
 
 bool 
 teleop_grasp::utils::has_too_much_change_occurred(const Eigen::Isometry3d& pose1_tf,const Eigen::Isometry3d& pose2_tf)
@@ -204,11 +226,8 @@ geometry_msgs::Pose
 teleop_grasp::utils::restrict_pose(geometry_msgs::Pose pose)
 {
 
-	// if ( has_too_much_change_occurred(pose) )
-	// {
-	// 	ROS_WARN_STREAM("hey i cannot move");
-	// 	return teleop_grasp::calibrate_pose_franka;
-	// }
+	if (pose.position.z < 0.2)
+		pose.position.z = 0.2;
 
 	pose.position.x = pose.position.x * 2 - 1.0;
 	pose.position.y = pose.position.y * 2 - 1.0;

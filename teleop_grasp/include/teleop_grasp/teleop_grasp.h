@@ -63,6 +63,9 @@ namespace teleop_grasp
 		set_current_franka_pose(const geometry_msgs::Pose& des_pose);
 
 		bool 
+		has_any_change_occurred(const geometry_msgs::Pose& pose);
+
+		bool 
 		has_any_change_occurred(const Eigen::Isometry3d& pose1_tf, const Eigen::Isometry3d& pose2_tf);
 
 		bool 
