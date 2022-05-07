@@ -6,7 +6,7 @@ repositories:
 
   src/franka_ros:
     type: git
-    url: git@github.com:frankaemika/franka_ros.git
+    url: git@github.com:teleop-grasp/franka_ros.git
     version: noetic-devel
 
   src/ros_utils:
