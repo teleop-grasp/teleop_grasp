@@ -160,7 +160,7 @@ CartesianPDNullspaceController::init(hardware_interface::RobotHW *hw, ros::NodeH
 }
 
 void
-CartesianPDNullspaceController::starting(const ros::Time& time)
+CartesianPDNullspaceController::starting(const ros::Time& /* time */)
 {
 	// set equilibrium point to current state
 	T_d = T_ref = get_robot_state().T_e;
@@ -170,36 +170,37 @@ CartesianPDNullspaceController::starting(const ros::Time& time)
 }
 
 void
-CartesianPDNullspaceController::update(const ros::Time& time, const ros::Duration& period)
+CartesianPDNullspaceController::update(const ros::Time& /* time */, const ros::Duration& period)
 {
 	// elapsed time
 	static ros::Duration elapsed_time = ros::Duration(0.);
 	elapsed_time += period;
 
 	// read robot state and dynamics
-	const auto [T_e, q, dq] = get_robot_state();
-	const auto [J, M, C, g] = get_robot_dynamics();
-	const auto dx_e = J * dq;
+	auto [T_e, q, dq] = get_robot_state();
+	auto [J, M, c, g] = get_robot_dynamics();
 
 	// compute errors (in base frame)
-	const auto x_de = get_pose_error(T_e, T_d); // [p_de, eps_de]
-	const auto dx_de = Eigen::Vector6d::Zero() - dx_e; // no desired velocity
+	Eigen::Vector6d x_de = get_pose_error(T_e, T_d); // [p_de, eps_de]
+
+	Eigen::Vector6d dx_e = J * dq;
+	Eigen::Vector6d dx_de = Eigen::Vector6d::Zero() - dx_e; // no desired velocity
 
 	// cartesian torque
-	const auto tau_task = J.transpose() * (kp * x_de + kd * dx_de);
+	Eigen::Vector7d tau_task = J.transpose() * (kp * x_de + kd * dx_de);
 
 	// const auto M_xe = (J * M.inverse() * J.transpose()).inverse();
 	// Eigen::Vector7d u = J.transpose() * M_xe * (kp * x_de + kd * dx_de) + g;
 
 	// nullspace torque
 	// https://studywolf.wordpress.com/2013/09/17/robot-control-5-controlling-in-the-null-space/
-	const auto J_T_pinv = Eigen::pseudo_inverse(J.transpose(), 0.2); // damped pseudo inverse
-	const auto I7x7d = Eigen::Matrix7d::Identity();
-	const auto kc = 2.0 * sqrt(kn); // damping ratio of 1.0
-	const auto tau_null = (I7x7d - J.transpose() * J_T_pinv) * (kn * (qN_d - q) - kc * dq);
+	Eigen::MatrixXd J_T_pinv = Eigen::pseudo_inverse(J.transpose(), 0.2); // damped pseudo inverse
+	Eigen::Matrix7d I7x7d = Eigen::Matrix7d::Identity();
+	double kc = 2.0 * sqrt(kn); // damping ratio of 1.0
+	Eigen::Vector7d tau_null = (I7x7d - J.transpose() * J_T_pinv) * (kn * (qN_d - q) - kc * dq);
 
 	// desired joint torque
-	Eigen::Vector7d tau_d = tau_task + tau_null + C;
+	Eigen::Vector7d tau_d = tau_task + tau_null + c;
 
 	// saturate rate-of-effort (rotatum)
 	if (dtau_max > 0)
@@ -246,7 +247,7 @@ CartesianPDNullspaceController::saturate_rotatum(const Eigen::Vector7d& tau_d, c
 	static Eigen::Vector7d tau_d_sat = Eigen::Vector7d::Zero();
 
 	// compute saturated torque
-	for (size_t i = 0; i < tau_d_sat.size(); ++i)
+	for (auto i = 0; i < tau_d_sat.size(); ++i)
 	{
 		const double dtau = (tau_d[i] - tau_d_prev[i]) / dt; // dtau/dt
 		tau_d_sat[i] = tau_d_prev[i] + std::max(std::min(dtau * dt, dtau_max * dt), -(dtau_max * dt));
@@ -262,24 +263,24 @@ CartesianPDNullspaceController::filter_desired_pose(const Eigen::Isometry3d& T_r
 {
 	std::lock_guard lock(mtx_T_ref);
 
-	auto [pos_ref, ori_ref] = std::tuple{ Eigen::Vector3d(T_ref.translation()), Eigen::Quaterniond(T_ref.rotation()) };
-	auto [pos_d, ori_d] = std::tuple{ Eigen::Vector3d(T_d.translation()), Eigen::Quaterniond(T_d.rotation()) };
+	auto [p_ref, quat_ref] = std::tuple{ Eigen::Vector3d(T_ref.translation()), Eigen::Quaterniond(T_ref.rotation()) };
+	auto [p_d, quat_d] = std::tuple{ Eigen::Vector3d(T_d.translation()), Eigen::Quaterniond(T_d.rotation()) };
 
-	pos_d = slew_rate * pos_ref + (1.0 - slew_rate) * pos_d;
-	ori_d = ori_d.slerp(slew_rate, ori_ref);
+	p_d = slew_rate * p_ref + (1.0 - slew_rate) * p_d;
+	quat_d = quat_d.slerp(slew_rate, quat_ref);
 
-	return Eigen::Translation3d(pos_d) * Eigen::Isometry3d(ori_d);
+	return Eigen::Translation3d(p_d) * Eigen::Isometry3d(quat_d);
 }
 
 Eigen::Vector6d
 CartesianPDNullspaceController::get_pose_error(const Eigen::Isometry3d& T_e, const Eigen::Isometry3d& T_d)
 {
-	const auto [pos_e, pos_d] = std::tuple{ T_e.translation(), T_d.translation() };
-	const auto [R_e, R_d] = std::tuple{ T_e.rotation(), T_d.rotation() };
+	const auto& [p_e, p_d] = std::tuple{ T_e.translation(), T_d.translation() };
+	const auto& [R_e, R_d] = std::tuple{ T_e.rotation(), T_d.rotation() };
 	// const auto [quat_e, quat_d] = std::tuple{ Eigen::Quaterniond(R_e), Eigen::Quaterniond(R_d) };
 
 	// position error
-	const auto pos_de = pos_d - pos_e;
+	Eigen::Vector3d p_de = p_d - p_e;
 
 	// orinetation error
 
@@ -287,13 +288,13 @@ CartesianPDNullspaceController::get_pose_error(const Eigen::Isometry3d& T_e, con
 	// R_12 = R_01' * R_02 = R_10 * R_02
 	// R_12 = (eta_21, eps_1_21) = (eta_21, eps_2_21)
 
-	const auto R_ed = R_e.transpose() * R_d;
-	const auto eps_e_de = Eigen::Quaterniond(R_ed).vec();
-	const auto eps_de = R_e * eps_e_de; // to base frame
+	Eigen::Matrix3d R_ed = R_e.transpose() * R_d;
+	Eigen::Vector3d eps_e_de = Eigen::Quaterniond(R_ed).vec();
+	Eigen::Vector3d eps_de = R_e * eps_e_de; // to base frame
 
 	// error vector
 	Eigen::Vector6d x_de;
-	x_de << pos_de, eps_de;
+	x_de << p_de, eps_de;
 
 	return x_de;
 }
@@ -307,15 +308,15 @@ CartesianPDNullspaceController::callback_command(const geometry_msgs::PoseStampe
 	T_ref = Eigen::make_tf(pose);
 
 	// ensure proper orientation
-	static auto ori_ref_prev = Eigen::Quaterniond(T_ref.rotation());
-	auto ori_ref = Eigen::Quaterniond(T_ref.rotation());
-	if (ori_ref_prev.coeffs().dot(ori_ref.coeffs()) < 0.0)
+	static auto quat_ref_prev = Eigen::Quaterniond(T_ref.rotation());
+	auto quat_ref = Eigen::Quaterniond(T_ref.rotation());
+	if (quat_ref_prev.coeffs().dot(quat_ref.coeffs()) < 0.0)
 	{
-		ori_ref.coeffs() = -ori_ref.coeffs();
-		T_ref.linear() = ori_ref.toRotationMatrix(); // set rotation (linear = rotation)
-		// T_ref = Eigen::Translation3d(T_ref.translation()) * Eigen::Isometry3d(ori_ref);
+		quat_ref.coeffs() = -quat_ref.coeffs();
+		T_ref.linear() = quat_ref.toRotationMatrix(); // set rotation (linear = rotation)
+		// T_ref = Eigen::Translation3d(T_ref.translation()) * Eigen::Isometry3d(quat_ref);
 	}
-	ori_ref_prev = ori_ref;
+	quat_ref_prev = quat_ref;
 }
 
 } // namespace franka_controllers

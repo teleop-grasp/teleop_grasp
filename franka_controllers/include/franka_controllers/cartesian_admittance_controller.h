@@ -22,6 +22,7 @@ namespace Eigen
 	using Vector6d = Eigen::Matrix<double,6,1>;
 	using Matrix6d = Eigen::Matrix<double,6,6>;
 	using Matrix6x7d = Eigen::Matrix<double,6,7>;
+	using Matrix7x6d = Eigen::Matrix<double,7,6>;
 	using Vector7d = Eigen::Matrix<double,7,1>;
 	using Matrix7d = Eigen::Matrix<double,7,7>;
 }
