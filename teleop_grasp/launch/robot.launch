@@ -8,12 +8,11 @@
 	<arg name="arm_id"      doc="Name of the panda robot to spawn"       default="panda"/>
 	<arg name="world"       doc="The Gazebo world to use"                default="workcell.world"/>
 
-	<arg name="controller"  doc="Controller to use with ros_control"     default="cartesian_pd_nullspace_controller"/>
+	<arg name="controller"  doc="Controller to use with ros_control"     default="cartesian_admittance_controller"/>
 	<arg name="use_gripper" doc="Use the Franka gripper"                 default="false"/>
 	<arg name="rviz"        doc="Launch RVIZ"                            default="false"/>
 	<arg name="rviz_marker" doc="Launch RVIZ with interactive marker"    default="$(arg rviz)"/>
 	<arg name="plotjuggler" doc="Launch PlotJuggler"                     default="false"/>
-
 
 	<!-- ################################################################################################################# -->
 
@@ -22,6 +21,12 @@
 
 	<!-- plotjuggler -->
 	<node if="$(arg plotjuggler)" name="plotjuggler" pkg="plotjuggler" type="plotjuggler" args="--layout $(find teleop_grasp)/config/plotjuggler_layout.xml"/>
+
+	<!-- rviz marker -->
+	<node if="$(arg rviz_marker)" name="interactive_marker" pkg="franka_example_controllers" type="interactive_marker.py">
+		<param name="link_name" value="$(arg arm_id)_link0"/>
+		<remap to="$(arg controller)/command" from="equilibrium_pose"/>
+	</node>
 
 	<!-- simulation -->
 	<group if="$(arg sim)">
@@ -34,11 +39,6 @@
 			<arg name="controller" value="$(arg controller)"/>
 			<arg name="rviz" value="$(arg rviz)"/>
 		</include>
-
-		<node if="$(arg rviz_marker)" name="interactive_marker" pkg="franka_example_controllers" type="interactive_marker.py">
-			<param name="link_name" value="$(arg arm_id)_link0"/>
-			<remap to="$(arg controller)/command" from="equilibrium_pose"/>
-		</node>
 
 	</group>
 
@@ -57,7 +57,8 @@
 		      args="$(arg controller)"
 		/>
 
-		<node if="$(arg rviz)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find teleop_grasp)/config/robot.rviz"/>
+		<!-- <node if="$(arg rviz)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find teleop_grasp)/config/robot.rviz"/> -->
+		<node if="$(arg rviz)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_example_controllers)/launch/rviz/franka_description_with_marker.rviz"/>
 		<!-- <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false"/> -->
 
 	</group>
