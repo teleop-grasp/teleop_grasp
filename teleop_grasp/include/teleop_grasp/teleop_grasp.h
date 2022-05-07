@@ -33,7 +33,7 @@ namespace teleop_grasp
 	inline constexpr double                   CHANGE_THRESHOLD = 0.05;
 
 	void
-	calibrate();
+	calibrate(const std::string& topic_franka_pose_ee);
 
 	geometry_msgs::Pose
 	compute_desired_ee_pose();
@@ -51,7 +51,7 @@ namespace teleop_grasp
 		predict_pose_linear();
 	}
 
-	namespace utils
+	namespace utils // remove this
 	{
 		geometry_msgs::Pose 
 		get_current_hand_pose();
@@ -59,8 +59,8 @@ namespace teleop_grasp
 		geometry_msgs::Pose
 		get_current_franka_pose();
 
-		void 
-		set_current_franka_pose(const geometry_msgs::Pose& des_pose);
+		// void
+		// set_current_franka_pose(const geometry_msgs::Pose& des_pose);
 
 		bool 
 		has_any_change_occurred(const geometry_msgs::Pose& pose);
@@ -68,7 +68,7 @@ namespace teleop_grasp
 		bool 
 		has_any_change_occurred(const Eigen::Isometry3d& pose1_tf, const Eigen::Isometry3d& pose2_tf);
 
-		bool 
+		bool
 		has_too_much_change_occurred(const geometry_msgs::Pose& pose);
 
 		bool

@@ -10,8 +10,8 @@
 #include <teleop_grasp/teleop_grasp.h>
 #include <ros_utils/eigen.h>
 
-void 
-teleop_grasp::calibrate()
+void
+teleop_grasp::calibrate(const std::string& topic_franka_pose_ee)
 {
 
 	static ros::NodeHandle nh;
@@ -29,7 +29,7 @@ teleop_grasp::calibrate()
 
 	teleop_grasp::calibrate_pose_franka.orientation = geometry_msgs::make_pose( Eigen::make_tf(teleop_grasp::calibrate_pose_franka) * T1 * T2 ).orientation;
 
-	command_pose_robot(teleop_grasp::calibrate_pose_franka);
+	command_pose_robot(teleop_grasp::calibrate_pose_franka, topic_franka_pose_ee);
 
 	teleop_grasp::pose_ee = utils::get_current_franka_pose();
 
@@ -49,7 +49,7 @@ teleop_grasp::compute_desired_ee_pose()
 	ROS_WARN_STREAM("relative change...: \n" << d_pose_tf.matrix());
 
 	// if the velocity becomes too large, often meaning the hand has moved off screen.
-	if ( utils::has_too_much_change_occurred(geometry_msgs::make_pose(d_pose_tf))  ) 
+	if ( utils::has_too_much_change_occurred(geometry_msgs::make_pose(d_pose_tf))  )
 	{
 		ROS_WARN_STREAM("velocity too large... returning to start pose...");
 		return teleop_grasp::calibrate_pose_franka;
@@ -91,7 +91,9 @@ void
 teleop_grasp::command_pose_robot(const geometry_msgs::Pose& pose, const std::string& topic_pose )
 {
 	static ros::NodeHandle nh;
-	static ros::Publisher pub_pose = nh.advertise<geometry_msgs::PoseStamped>(topic_pose,1);
+	static ros::Publisher pub_pose{};
+	if (pub_pose.getTopic() != topic_pose)
+		pub_pose = nh.advertise<geometry_msgs::PoseStamped>(topic_pose, 1);
 
 	auto pose_tf = Eigen::make_tf(pose);
 
@@ -166,20 +168,20 @@ teleop_grasp::utils::get_current_franka_pose()
 	return geometry_msgs::make_pose(Eigen::Isometry3d(Eigen::Matrix4d::Map(franka_state.O_T_EE.data())));
 }
 
-void
-teleop_grasp::utils::set_current_franka_pose(const geometry_msgs::Pose &des_pose)
-{
-	static ros::NodeHandle nh;
-	static ros::Publisher pub_pose = nh.advertise<geometry_msgs::PoseStamped>("/cartesian_pd_nullspace_controller/command",1);
+// void
+// teleop_grasp::utils::set_current_franka_pose(const geometry_msgs::Pose &des_pose)
+// {
+// 	static ros::NodeHandle nh;
+// 	static ros::Publisher pub_pose = nh.advertise<geometry_msgs::PoseStamped>("/cartesian_pd_nullspace_controller/command",1);
 
-	// convert msg to correst geometry_msgs::PoseStamped type
-	geometry_msgs::PoseStamped pose_stamped;
-	pose_stamped.pose = des_pose;
-	pose_stamped.header.stamp.sec = ros::Time().sec;
+// 	// convert msg to correst geometry_msgs::PoseStamped type
+// 	geometry_msgs::PoseStamped pose_stamped;
+// 	pose_stamped.pose = des_pose;
+// 	pose_stamped.header.stamp.sec = ros::Time().sec;
 
-	// send message
-	pub_pose.publish(pose_stamped);
-}
+// 	// send message
+// 	pub_pose.publish(pose_stamped);
+// }
 
 
 bool 
@@ -202,7 +204,7 @@ teleop_grasp::utils::has_any_change_occurred(const Eigen::Isometry3d& pose1_tf,c
 		return true;
 }
 
-bool 
+bool
 teleop_grasp::utils::has_too_much_change_occurred(const geometry_msgs::Pose& d_pose)
 {
 	ROS_WARN_STREAM(" d_pose bad?! " << d_pose);

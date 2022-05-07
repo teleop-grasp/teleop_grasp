@@ -18,15 +18,15 @@ main(int argc, char** argv)
 	ros::NodeHandle nh;
 
 	// load topics
-	auto topic_grasp_state    = ros::param::param<std::string>("~topic_grasp_state","");
-	auto topic_pose_hand      = ros::param::param<std::string>("~topic_pose_hand","");
-	auto topic_franka_pose_ee = ros::param::param<std::string>("~topic_franka_pose_ee","");
+	auto topic_grasp_state    = ros::param::param<std::string>("~topic_grasp_state", "");
+	auto topic_pose_hand      = ros::param::param<std::string>("~topic_pose_hand", "");
+	auto topic_franka_pose_ee = ros::param::param<std::string>("~topic_franka_pose_ee", "");
 
 	ros::Subscriber sub_grasp = nh.subscribe<std_msgs::Bool>( topic_grasp_state, 1, [&](const auto& msg){ teleop_grasp::gesture_state = (*msg).data; });
 	ros::Subscriber sub_pose  = nh.subscribe<geometry_msgs::Pose>( topic_pose_hand, 1, [&](const auto& msg){ teleop_grasp::pose_hand = *msg;}); 
 
 	// std::cin.get();
-	teleop_grasp::calibrate();
+	teleop_grasp::calibrate(topic_franka_pose_ee);
 
 	ros::Rate rate(50);
 
@@ -41,7 +41,7 @@ main(int argc, char** argv)
 
 		// compute the desired 
 		auto des_ee_pose = teleop_grasp::compute_desired_ee_pose();
-		teleop_grasp::command_pose_robot(des_ee_pose);
+		teleop_grasp::command_pose_robot(des_ee_pose, topic_franka_pose_ee);
 
 		ros::spinOnce();
 		rate.sleep();
