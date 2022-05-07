@@ -226,8 +226,6 @@ geometry_msgs::Pose
 teleop_grasp::utils::restrict_pose(geometry_msgs::Pose pose)
 {
 
-	if (pose.position.z < 0.2)
-		pose.position.z = 0.2;
 
 	double min = -0.5; // m
 	double max =  0.5; // m
@@ -238,6 +236,8 @@ teleop_grasp::utils::restrict_pose(geometry_msgs::Pose pose)
 	pose.position.x = pose.position.x + 0.5;
 	pose.position.z = pose.position.z + 0.2;
 
+	if (pose.position.z < 0.2)
+		pose.position.z = 0.2;
 	pose.position.y *= -1.0;
 
 	return pose;

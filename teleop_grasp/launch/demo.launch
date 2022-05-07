@@ -1,0 +1,19 @@
+<launch>
+	<!-- include pipeline.launch -->
+	<include file="$(find teleop_grasp)/launch/pipeline.launch">
+		<arg name="cam_device"         value="/dev/video0"/>
+		<arg name="topic_grasp_state"  value="/hand_gesture/grasp_state"/>
+		<arg name="topic_image_raw"    value="/cv_camera/image_raw"/>
+		<arg name="topic_image_hand"   value="/pose_gesture/image_hand"/>
+		<arg name="topic_pose_hand"    value="/pose_gesture/pose_hand"/>
+		<arg name="visualize_tracking" value="true"/>
+		<arg name="estimate_depth"     value="false"/>
+		<arg name="ema_alpha"          value="[0.3, 0.4]"/>
+		<arg name="sim"                value="true"/>
+		<arg name="world"              value="workcell.world"/>
+		<arg name="controller"         value="cartesian_admittance_controller"/>
+		<arg name="use_gripper"        value="true"/>
+		<arg name="rviz"               value="true"/>
+		<arg name="robot_ip"           value="192.168.1.2"/>
+	</include>
+</launch>
