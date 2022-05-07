@@ -83,16 +83,19 @@ namespace franka_controllers
 		Pose                                          pose_d; // CHANGE TO STRUCT
 		Eigen::Vector7d                               qN_d;
 
-		Eigen::Matrix6d                               kp, kd;
+		// Eigen::Matrix6d                               kp, kd;
 		Eigen::Matrix3d                               Kp, Ko, Dp, Do, Mp, Mo;
 		double                                        kpp, kpo, kvp, kvo, kn, kc;
 		double                                        dtau_max;
 		double                                        slew_rate;
+		bool                                          in_simulation;
+		double                                        state_publish_rate;
 
 		ros::Subscriber                               sub_command;
 
 		std::mutex                                    mtx_msg_debug;
 		ros::Publisher                                pub_msg_debug;
+		ros::Publisher                                pub_msg_T_c;
 		std::thread                                   thread_msg_debug;
 		CartesianAdmittanceControllerDebug            msg_debug;
 

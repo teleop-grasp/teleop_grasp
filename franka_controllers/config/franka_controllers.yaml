@@ -48,8 +48,13 @@ cartesian_admittance_controller:
         - $(arg arm_id)_joint6
         - $(arg arm_id)_joint7
 
-    kp: [200, 200, 200, 10, 10, 10] # stiffness
-    kd: [28.3, 28.3, 28.3, 6.3, 6.3, 6.3] # dampening
+    # compliance
+    # Kp: [1200, 1200, 1200]
+    # Ko: [7.0, 7.0, 7.0]
+    # Dp: [154.92, 154.92, 154.92]
+    # Do: [1.1832, 1.1832, 1.1832]
+    # Mp: [5, 5, 5]
+    # Mo: [0.05, 0.05, 0.05]
 
     Kp: [400, 400, 400]
     Ko: [200, 200, 200]
@@ -58,12 +63,15 @@ cartesian_admittance_controller:
     Mp: [1, 1, 1]
     Mo: [1, 1, 1]
 
+    # tracking
     kpp: 200
-    kpo: 100
-    kvp: 28.3
-    kvo: 40
-    kn: 0.5 # nullspace stiffness
+    kpo: 900
+    kvp: 28.28
+    kvo: 60
+
+    # nullspace
+    kn: 0.0 # nullspace stiffness
     # kc: 2 * sqrt(kn) # for damping ratio of 1.0 (set in C++)
 
     dtau_max: 1000 # set to -1 to disable rotatum saturation
-    slew_rate: 1.0 # @ 1000 Hz
+    slew_rate: 0.005 # @ 1000 Hz
