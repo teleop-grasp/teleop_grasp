@@ -3,24 +3,25 @@
 	<!-- ARGUMENTS -->
 	<!-- see README.md for info -->
 
-	<arg name="cam_device"         doc="Name of the image capture device"    default="/dev/video0"/>
-	<arg name="topic_grasp_state"  doc=""                                    default="/hand_gesture/grasp_state"/>
-	<arg name="topic_image_raw"    doc=""                                    default="/cv_camera/image_raw"/>
-	<arg name="topic_image_hand"   doc=""                                    default="/pose_gesture/image_hand"/>
-	<arg name="topic_pose_hand"    doc=""                                    default="/pose_gesture/pose_hand"/>
-	<arg name="visualize_tracking" doc=""                                    default="false"/>
-	<arg name="estimate_depth"     doc="Estimate x-axis (depth)"             default="false"/>
-	<arg name="ema_alpha"          doc="Exp movavg filter for [R, t] (0-1)"  default="[0.3, 0.4]"/>
+	<arg name="cam_device"         doc="Name of the image capture device"       default="/dev/video0"/>
+	<arg name="topic_grasp_state"  doc=""                                       default="/hand_gesture/grasp_state"/>
+	<arg name="topic_image_raw"    doc=""                                       default="/cv_camera/image_raw"/>
+	<arg name="topic_image_hand"   doc=""                                       default="/pose_gesture/image_hand"/>
+	<arg name="topic_pose_hand"    doc=""                                       default="/pose_gesture/pose_hand"/>
+	<arg name="visualize_tracking" doc=""                                       default="false"/>
+	<arg name="estimate_depth"     doc="Estimate x-axis (depth)"                default="false"/>
+	<arg name="ema_alpha"          doc="Exp movavg filter for [R, t] (0-1)"     default="[0.3, 0.4]"/>
 
-	<arg name="sim"                doc="Lanch in simulation environment"     default="true"/>
-	<arg name="world"              doc="The Gazebo world to use"             default="workcell.world"/>
+	<arg name="robot_ip"           doc="IP address of physical robot"           default=""/>
+	<arg name="sim"                doc="Lanch in simulation environment"        default="$(eval arg('robot_ip') == '')"/>
+	<arg name="world"              doc="The Gazebo world to use"                default="workcell.world"/>
 
-	<arg name="controller"         doc="Controller to use with ros_control"  default="cartesian_pd_nullspace_controller"/>
-
-	<arg name="use_gripper"        doc="Use the Franka gripper"              default="true"/>
-	<arg name="rviz"               doc="Launch RVIZ"                         default="false"/>
-
-	<arg name="robot_ip"           doc="IP address of physical robot"        default=""/>
+	<arg name="controller"         doc="Controller to use with ros_control"     default="cartesian_pd_nullspace_controller"/>
+	<!-- <arg name="controller"         doc="Controller to use with ros_control"     default="cartesian_admittance_controller"/> -->
+	<arg name="use_gripper"        doc="Use the Franka gripper"                 default="false"/>
+	<arg name="rviz"               doc="Launch RVIZ"                            default="false"/>
+	<arg name="rviz_marker"        doc="Launch RVIZ with interactive marker"    default="$(arg rviz)"/>
+	<arg name="plotjuggler"        doc="Launch PlotJuggler"                     default="false"/>
 
 	<!-- ################################################################################################################# -->
 
@@ -47,16 +48,12 @@
 
 	<!-- teleop_grasp (system) node -->
 	<node pkg="teleop_grasp" type="teleoperation" name="teleoperation">
-		<param name="topic_grasp_state"     value="$(arg topic_grasp_state)"/>
-		<param name="topic_pose_hand"       value="$(arg topic_pose_hand)"/>
-		<param name="topic_franka_pose_ee"  value="/$(arg controller)/command"/>
+		<param name="topic_grasp_state" value="$(arg topic_grasp_state)"/>
+		<param name="topic_pose_hand" value="$(arg topic_pose_hand)"/>
+		<param name="topic_franka_pose_ee" value="/$(arg controller)/command"/>
 	</node>
 
 	<!-- robot via franka_ros (hw/sim) -->
-	<include file="$(find teleop_grasp)/launch/robot.launch">
-		<arg name="sim" value="$(arg sim)"/>
-		<arg name="controller" value="$(arg controller)"/>
-		<arg name="use_gripper" value="$(arg use_gripper)"/>
-	</include>
+	<include file="$(find teleop_grasp)/launch/robot.launch" pass_all_args="true"/>
 
 </launch>
