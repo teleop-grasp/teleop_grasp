@@ -27,12 +27,12 @@ CartesianAdmittanceController::init(hardware_interface::RobotHW *hw, ros::NodeHa
 	if (DEBUG_MODE)
 	{
 		ROS_ERROR_STREAM(CONTROLLER_NAME << " is running in DEBUG mode and may no suffice 1 kHz update loop.");
-		sleep(2);
+		sleep(5);
 	}
 
 	// determine whether in simulation or on real robot
 	std::vector<std::string> vec_nodes;
-	// in_simulation = ros::master::getNodes(vec_nodes) and not is_in("/franka_control_node", vec_nodes);
+	in_simulation = ros::master::getNodes(vec_nodes) and not is_in("/franka_control_node", vec_nodes);
 
 	// read arm_id from config file
 	if (not nh.getParam("arm_id", arm_id))
@@ -351,7 +351,7 @@ CartesianAdmittanceController::get_robot_state()
 	// Eigen::Vector7d tau_ext = Eigen::Vector7d(robot_state.tau_ext_hat_filtered.data());
 	// Eigen::Vector6d h_e = Eigen::pseudo_inverse(J.transpose(), 0.2) * tau_ext;
 	Eigen::Vector6d h_e = Eigen::Vector6d(robot_state.O_F_ext_hat_K.data());
-	// h_e *= (in_simulation) ? 1 : -1; // invert if running on real robot
+	h_e *= (in_simulation) ? 1 : -1; // invert if running on real robot
 
 	return
 	{
@@ -452,7 +452,7 @@ CartesianAdmittanceController::spatial_impedance(const Eigen::Vector3d& p_d, con
 	Eigen::Vector3d ddp_c = ddp_cd + ddp_d;
 
 	// orientation:
-	// q_d_cd = ..
+	// q_d_cd = ...
 
 	Eigen::Quaterniond quat_d = Eigen::Quaterniond(R_d);
 	Eigen::Quaterniond quat_c = quat_d * quat_d_cd;
