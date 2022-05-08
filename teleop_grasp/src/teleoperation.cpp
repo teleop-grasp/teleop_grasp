@@ -39,9 +39,9 @@ main(int argc, char** argv)
 
 		// ROS_WARN_STREAM("hand: \n" << geometry_msgs::make_pose(teleop_grasp::T_o_hand));
 
-		geometry_msgs::Pose a = teleop_grasp::compute_desired_ee_pose();
+		// geometry_msgs::Pose a = teleop_grasp::compute_desired_ee_pose();
 
-		teleop_grasp::command_pose_robot( teleop_grasp::restrict_pose(a));
+		// teleop_grasp::command_pose_robot( teleop_grasp::restrict_pose(a));
 		// teleop_grasp::command_pose_robot(a);
 
 		ros::spinOnce();
