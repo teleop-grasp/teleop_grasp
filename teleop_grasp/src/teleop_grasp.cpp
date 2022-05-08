@@ -92,14 +92,18 @@ void
 teleop_grasp::command_gripper(const bool& open_or_close)
 {
 
-	actionlib::SimpleActionClient<franka_gripper::MoveAction> action("/franka_gripper/move",true);
-	action.waitForServer();
+	static actionlib::SimpleActionClient<franka_gripper::MoveAction> action("/franka_gripper/move", true);
+	static auto wait_server = [&]
+	{
+		action.waitForServer();
+		return true;
+	}();
 
-	franka_gripper::MoveAction msg;
-	msg.action_goal.goal.speed = 0.1;
+	static franka_gripper::MoveAction msg;
+	msg.action_goal.goal.speed = 0.2;
 
-	if (open_or_close == teleop_grasp::gesture_state_prev )
-		return;
+	// if (open_or_close == teleop_grasp::gesture_state_prev )
+	// 	return;
 
 	if (open_or_close == bool(teleop_grasp::GripperState::OPEN))
 	{

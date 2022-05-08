@@ -262,8 +262,8 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	elapsed_time += period;
 
 	// update gains using dynamic_reconfigure
-	if (got_new_dynconf_gains)
-		this->dynamic_reconfigure_gains();
+	// if (got_new_dynconf_gains)
+		// this->dynamic_reconfigure_gains();
 
 	// read reference pose [p, R]
 	auto [p_ref, R_ref] = *buffer_pose_ref.readFromRT();
@@ -286,8 +286,8 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	Eigen::Vector6d a = pos_ori_control(p_c, p_e, R_c, R_e, dp_c, dp_e, w_c, w_e, ddp_c, dw_c);
 
 	// desired task-space torque (inverse dynamics)
-	// Eigen::Matrix7x6d J_pinv = Eigen::pseudo_inverse(J, 0.2);
-	Eigen::Matrix7x6d J_pinv = M.inverse() * J.transpose() * (J * M.inverse() * J.transpose()).inverse(); // dynamically consistent pseudo-inverse
+	Eigen::Matrix7x6d J_pinv = Eigen::pseudo_inverse(J, 0.2);
+	// Eigen::Matrix7x6d J_pinv = M.inverse() * J.transpose() * (J * M.inverse() * J.transpose()).inverse(); // dynamically consistent pseudo-inverse
 	Eigen::Vector7d tau_task = M * J_pinv * (a - dJ * dq);
 	// Eigen::Vector7d tau_task = M * J_pinv * (a - dJ * dq) + J.transpose() * h_e;
 
