@@ -17,20 +17,17 @@ namespace teleop_grasp
 {
 
 	enum class GripperState { CLOSE, OPEN };
-	inline geometry_msgs::Pose calibrate_pose_franka;
-
-
+	inline Eigen::Isometry3d                  T_o_ee_cal;
 	inline bool                               gesture_state      = false;
 	inline bool                               gesture_state_prev = false;
-	inline geometry_msgs::Pose                pose_hand;
-	inline geometry_msgs::Pose                pose_hand_prev;
-	inline geometry_msgs::Pose                pose_ee_des;
-	inline geometry_msgs::Pose                pose_ee;
-	inline geometry_msgs::Pose                pose_d;
-	inline std::array<geometry_msgs::Pose, 3> poses_prev;
-	inline constexpr double                   MAX_LIN_VELOCITY = 0.5;
-	inline constexpr double                   MAX_ANG_VELOCITY = M_PI / 2.0;
-	inline constexpr double                   CHANGE_THRESHOLD = 0.05;
+	inline Eigen::Isometry3d                  T_o_hand;
+	inline geometry_msgs::Pose                T_o_hand_2;
+	inline Eigen::Isometry3d                  T_o_hand_prev;
+	inline Eigen::Isometry3d                  T_o_ee_des;
+	inline Eigen::Isometry3d                  T_o_ee;
+	inline constexpr double                   MAX_LIN_VELOCITY   = 0.5;
+	inline constexpr double                   MAX_ANG_VELOCITY   = M_PI / 2.0;
+	inline constexpr double                   CHANGE_THRESHOLD   = 0.05;
 
 	void
 	calibrate(const std::string& topic_franka_pose_ee);
@@ -51,34 +48,19 @@ namespace teleop_grasp
 		predict_pose_linear();
 	}
 
-	namespace utils // remove this
-	{
-		geometry_msgs::Pose 
-		get_current_hand_pose();
+	Eigen::Isometry3d
+	get_current_hand_pose();
 
-		geometry_msgs::Pose
-		get_current_franka_pose();
+	Eigen::Isometry3d
+	get_current_franka_pose();
 
-		// void
-		// set_current_franka_pose(const geometry_msgs::Pose& des_pose);
+	void
+	set_current_franka_pose(const geometry_msgs::Pose &des_pose);
 
-		bool 
-		has_any_change_occurred(const geometry_msgs::Pose& pose);
+	bool
+	has_too_much_change_occurred(const geometry_msgs::Pose& pose);
 
-		bool 
-		has_any_change_occurred(const Eigen::Isometry3d& pose1_tf, const Eigen::Isometry3d& pose2_tf);
-
-		bool
-		has_too_much_change_occurred(const geometry_msgs::Pose& pose);
-
-		bool
-		has_too_much_change_occurred(const Eigen::Isometry3d& pose1_tf,const Eigen::Isometry3d& pose2_tf);
-
-		geometry_msgs::Pose
-		restrict_pose(geometry_msgs::Pose pose);
-	}
-
-
-
+	Eigen::Isometry3d
+	restrict_pose(Eigen::Isometry3d pose);
 
 }
