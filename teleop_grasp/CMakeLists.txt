@@ -97,6 +97,14 @@ install(
 install(DIRECTORY models DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(DIRECTORY worlds DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
+install(DIRECTORY launch
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+install(DIRECTORY config
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
 ################################################################################################
 
 # experiments (executables from /tests)

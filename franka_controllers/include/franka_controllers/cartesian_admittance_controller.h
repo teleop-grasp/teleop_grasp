@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <mutex>
+#include <atomic>
 #include <thread>
 #include <Eigen/Eigen>
 
@@ -16,6 +17,9 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <franka_controllers/CartesianAdmittanceControllerDebug.h>
+#include <dynamic_reconfigure/server.h>
+#include <franka_controllers/CartesianAdmittanceControllerConfig.h>
+#include <franka_controllers/compliance_paramConfig.h>
 
 namespace Eigen
 {
@@ -30,8 +34,8 @@ namespace Eigen
 namespace franka_controllers
 {
 	class CartesianAdmittanceController final : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface,
-	                                                                                                  hardware_interface::EffortJointInterface,
-	                                                                                                  franka_hw::FrankaStateInterface>
+																									  hardware_interface::EffortJointInterface,
+																									  franka_hw::FrankaStateInterface>
 	{
 	public:
 
@@ -99,6 +103,11 @@ namespace franka_controllers
 		std::thread                                   thread_msg_debug;
 		CartesianAdmittanceControllerDebug            msg_debug;
 
+		std::mutex                                    mtx_dynconf;
+		CartesianAdmittanceControllerConfig           dynconf;
+		std::atomic<bool>                             got_new_dynconf_gains = false;
+		std::unique_ptr<dynamic_reconfigure::Server<CartesianAdmittanceControllerConfig>> server_dynconf;
+
 		Frame
 		get_desired(const Eigen::Vector3d& p_ref, const Eigen::Matrix3d& R_ref);
 
@@ -134,8 +143,8 @@ namespace franka_controllers
 			const Eigen::Vector3d& dw_c
 		);
 
-		Eigen::Vector6d
-		get_pose_error(const Eigen::Isometry3d& T_e, const Eigen::Isometry3d& T_d);
+		void
+		dynamic_reconfigure_gains();
 
 		Eigen::Isometry3d
 		filter_desired_pose(const Eigen::Isometry3d& pose_ref);
@@ -145,6 +154,9 @@ namespace franka_controllers
 
 		void
 		callback_command(const geometry_msgs::PoseStampedConstPtr& msg);
+		
+		void
+		callback_dynconf(franka_controllers::CartesianAdmittanceControllerConfig& conf, uint32_t level);
 
 	};
 }

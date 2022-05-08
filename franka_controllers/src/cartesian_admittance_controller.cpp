@@ -32,7 +32,7 @@ CartesianAdmittanceController::init(hardware_interface::RobotHW *hw, ros::NodeHa
 
 	// determine whether in simulation or on real robot
 	std::vector<std::string> vec_nodes;
-	in_simulation = ros::master::getNodes(vec_nodes) and not is_in("/franka_control_node", vec_nodes);
+	in_simulation = ros::master::getNodes(vec_nodes) and not is_in("/franka_control", vec_nodes);
 
 	// read arm_id from config file
 	if (not nh.getParam("arm_id", arm_id))
@@ -178,6 +178,11 @@ CartesianAdmittanceController::init(hardware_interface::RobotHW *hw, ros::NodeHa
 		}
 	});
 
+	// dynamic reconfigure of parameters (gains)
+	// server_dynconf = std::make_unique<dynamic_reconfigure::Server<franka_controllers::CartesianAdmittanceControllerConfig>>(ros::NodeHandle(nh.getNamespace() + "/dynconf"));
+	server_dynconf = std::make_unique<dynamic_reconfigure::Server<franka_controllers::CartesianAdmittanceControllerConfig>>(nh);
+	server_dynconf->setCallback(boost::bind(&CartesianAdmittanceController::callback_dynconf, this, _1, _2));
+
 	// init complete
 	ROS_WARN_STREAM("Initialized " << CONTROLLER_NAME << " with:\n\n"
 		<< "in_simulation = "          << std::boolalpha << in_simulation << "\n"
@@ -242,8 +247,6 @@ CartesianAdmittanceController::starting(const ros::Time& /* time */)
 	// std::cout << "EE_T_K:\n\n" << EE_T_K.matrix() << std::endl;
 	// std::cout << "O_T_NE:\n\n" << O_T_NE.matrix() << std::endl;
 	// std::cout << "F_T_NE:\n\n" << F_T_NE.matrix() << std::endl;
-
-	sleep(2);
 }
 
 void
@@ -258,8 +261,9 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	double dt = (period.toSec() < 1e-7) ? 0.001 : period.toSec(); // ensure dt > 0
 	elapsed_time += period;
 
-	// update dynamics parameters
-	// this->dynamic_reconfigure_parameters();
+	// update gains using dynamic_reconfigure
+	if (got_new_dynconf_gains)
+		this->dynamic_reconfigure_gains();
 
 	// read reference pose [p, R]
 	auto [p_ref, R_ref] = *buffer_pose_ref.readFromRT();
@@ -499,6 +503,35 @@ CartesianAdmittanceController::pos_ori_control(const Eigen::Vector3d& p_c, const
 	return (Eigen::Vector6d() << a_p, a_o).finished();
 }
 
+void
+CartesianAdmittanceController::dynamic_reconfigure_gains()
+{
+	std::lock_guard lock(mtx_dynconf);
+	ROS_WARN_STREAM("UPDATED GAINS!");
+	
+	// tracking
+	kpp = dynconf.kpp;
+	kpo = dynconf.kpo;
+	kvp = dynconf.kvp;
+	kvo = dynconf.kvo;
+	slew_rate = dynconf.slew_rate;
+	
+	// nullspace
+	kn = dynconf.kn;
+	
+	// compliance
+	Kp = Eigen::Matrix3d::Identity() * dynconf.Kp;
+	Ko = Eigen::Matrix3d::Identity() * dynconf.Ko;
+	Dp = Eigen::Matrix3d::Identity() * dynconf.Dp;
+	Do = Eigen::Matrix3d::Identity() * dynconf.Do;
+	Mp = Eigen::Matrix3d::Identity() * dynconf.Mp;
+	Mo = Eigen::Matrix3d::Identity() * dynconf.Mo;
+
+	
+
+	got_new_dynconf_gains = false;
+}
+
 Eigen::Vector7d
 CartesianAdmittanceController::saturate_rotatum(const Eigen::Vector7d& tau_d, const double dt)
 {
@@ -516,36 +549,6 @@ CartesianAdmittanceController::saturate_rotatum(const Eigen::Vector7d& tau_d, co
 	// save for next iteration and return
 	tau_d_prev = tau_d_sat;
 	return tau_d_sat;
-}
-
-Eigen::Vector6d
-CartesianAdmittanceController::get_pose_error(const Eigen::Isometry3d& T_e, const Eigen::Isometry3d& T_d)
-{
-	// const auto& [p_e, p_d] = std::tuple{ T_e.translation(), T_d.translation() };
-	// const auto& [R_e, R_d] = std::tuple{ T_e.rotation(), T_d.rotation() };
-	Eigen::Vector3d p_e = T_e.translation();
-	Eigen::Vector3d p_d = T_d.translation();
-	Eigen::Matrix3d R_e = T_e.rotation();
-	Eigen::Matrix3d R_d = T_d.rotation();
-
-	// position error
-	Eigen::Vector3d p_de = p_d - p_e;
-
-	// orientation error
-
-	// from (11), (27) in "The Role of Euler Parameters in Robot Control"
-	// R_12 = R_01' * R_02 = R_10 * R_02
-	// R_12 = (eta_21, eps_1_21) = (eta_21, eps_2_21)
-
-	Eigen::Matrix3d R_ed = R_e.transpose() * R_d;
-	Eigen::Vector3d eps_e_de = Eigen::Quaterniond(R_ed).vec();
-	Eigen::Vector3d eps_de = R_e * eps_e_de; // to base frame
-
-	// error vector [6 x 1]
-	Eigen::Vector6d x_de;
-	x_de << p_de, eps_de;
-
-	return x_de;
 }
 
 void
@@ -570,6 +573,15 @@ CartesianAdmittanceController::callback_command(const geometry_msgs::PoseStamped
 	// write pose
 	buffer_pose_ref.writeFromNonRT(Pose{ T_ref.translation(), T_ref.rotation() });
 }
+
+void
+CartesianAdmittanceController::callback_dynconf(franka_controllers::CartesianAdmittanceControllerConfig& conf, uint32_t level)
+{
+	std::lock_guard lock(mtx_dynconf);
+	this->dynconf = conf;
+	got_new_dynconf_gains = true;
+}
+
 
 } // namespace franka_controllers
 
