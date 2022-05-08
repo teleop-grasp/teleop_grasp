@@ -508,6 +508,27 @@ CartesianAdmittanceController::dynamic_reconfigure_gains()
 {
 	std::lock_guard lock(mtx_dynconf);
 	ROS_WARN_STREAM("UPDATED GAINS!");
+	
+	// tracking
+	kpp = dynconf.kpp;
+	kpo = dynconf.kpo;
+	kvp = dynconf.kvp;
+	kvo = dynconf.kvo;
+	slew_rate = dynconf.slew_rate;
+	
+	// nullspace
+	kn = dynconf.kn;
+	
+	// compliance
+	Kp = Eigen::Matrix3d::Identity() * dynconf.Kp;
+	Ko = Eigen::Matrix3d::Identity() * dynconf.Ko;
+	Dp = Eigen::Matrix3d::Identity() * dynconf.Dp;
+	Do = Eigen::Matrix3d::Identity() * dynconf.Do;
+	Mp = Eigen::Matrix3d::Identity() * dynconf.Mp;
+	Mo = Eigen::Matrix3d::Identity() * dynconf.Mo;
+
+	
+
 	got_new_dynconf_gains = false;
 }
 

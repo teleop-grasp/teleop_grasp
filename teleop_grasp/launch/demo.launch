@@ -13,7 +13,8 @@
 		<arg name="world"              value="workcell.world"/>
 		<arg name="controller"         value="cartesian_admittance_controller"/>
 		<arg name="use_gripper"        value="true"/>
-		<arg name="rviz"               value="true"/>
+		<arg name="rviz"               value="false"/>
+		<!-- <arg name="rviz"               value="true"/> -->
 		<arg name="robot_ip"           value="192.168.1.2"/>
 	</include>
 </launch>
