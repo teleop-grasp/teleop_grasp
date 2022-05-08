@@ -32,6 +32,7 @@ find_package(
 		geometry_msgs
 		message_generation
 		message_runtime
+        dynamic_reconfigure
 )
 
 # include directories
@@ -54,6 +55,13 @@ generate_messages(
 	DEPENDENCIES
 		std_msgs
 		geometry_msgs
+)
+
+# dynamic reconfigure
+
+generate_dynamic_reconfigure_options(
+  config/cartesian_admittance_controller.cfg
+  config/compliance_param.cfg
 )
 
 ################################################################################################
@@ -81,6 +89,7 @@ catkin_package(
 		geometry_msgs
 		message_generation
 		message_runtime
+        dynamic_reconfigure
 	DEPENDS
 		EIGEN3
 )
