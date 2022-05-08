@@ -1,18 +1,18 @@
-#include "geometry_msgs/Pose.h"
-#include "geometry_msgs/PoseStamped.h"
-#include "ros/init.h"
-#include "ros/node_handle.h"
-#include "ros/param.h"
-#include "ros/rate.h"
-#include "ros/subscriber.h"
-#include "ros_utils/eigen.h"
-#include "ros_utils/std.h"
-#include "std_msgs/Bool.h"
-#include "teleop_grasp/teleop_grasp.h"
-#include <cstddef>
 #include <iostream>
 #include <vector>
+#include <Eigen/Eigen>
+
+#include <ros/ros.h>
+
+#include <ros_utils/std.h>
+#include <ros_utils/eigen.h>
+#include <ros_utils/geometry_msgs.h>
+
+#include <std_msgs/Bool.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <franka_msgs/FrankaState.h>
+
 
 int
 main(int argc, char** argv)
@@ -35,8 +35,8 @@ main(int argc, char** argv)
 	bool gesture_state;
 	ros::Subscriber sub_gesture_state = nh.subscribe<std_msgs::Bool>(topic_grasp_state, 1, [&](const auto& msg){ gesture_state = msg->data; });
 
-	// wait for hand psoe
-	sleep(5);
+	// wait for hand pose
+	sleep(5); // let ROS settle
 	ROS_INFO_STREAM("waiting for hand pose (put up your hand)...");
 	ros::topic::waitForMessage<geometry_msgs::Pose>(topic_pose_hand);
 
