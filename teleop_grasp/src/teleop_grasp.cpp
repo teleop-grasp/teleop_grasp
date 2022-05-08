@@ -89,29 +89,26 @@ teleop_grasp::command_pose_robot(const geometry_msgs::Pose& pose, const std::str
 }
 
 void
-teleop_grasp::command_gripper(const teleop_grasp::GripperState& open_or_close)
+teleop_grasp::command_gripper(const bool& open_or_close)
 {
+
 	actionlib::SimpleActionClient<franka_gripper::MoveAction> action("/franka_gripper/move",true);
 	action.waitForServer();
-
-	// ROS_WARN_STREAM("sending action to gripper...");
 
 	franka_gripper::MoveAction msg;
 	msg.action_goal.goal.speed = 0.1;
 
-	if (bool(open_or_close) == teleop_grasp::gesture_state_prev )
+	if (open_or_close == teleop_grasp::gesture_state_prev )
 		return;
 
-	if (open_or_close == teleop_grasp::GripperState::OPEN)
+	if (open_or_close == bool(teleop_grasp::GripperState::OPEN))
 	{
-		ROS_INFO("Opening gripper...");
 		teleop_grasp::gesture_state_prev = true;
 		msg.action_goal.goal.width = 0.045;
 		action.sendGoal(msg.action_goal.goal);
 	}
 	else
 	{
-		ROS_INFO("Closing gripper...");
 		teleop_grasp::gesture_state_prev = false;
 		msg.action_goal.goal.width = 0.01;
 		action.sendGoal(msg.action_goal.goal);

@@ -39,7 +39,7 @@ namespace teleop_grasp
 	command_pose_robot(const geometry_msgs::Pose& msg, const std::string& topic_pose = "/cartesian_pd_nullspace_controller/command");
 
 	void 
-	command_gripper(const teleop_grasp::GripperState& open_or_close);
+	command_gripper(const bool& open_or_close);
 
 
 	namespace predictor

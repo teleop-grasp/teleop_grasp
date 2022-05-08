@@ -1,3 +1,5 @@
+#include <teleop_grasp/teleop_grasp.h>
+
 #include <iostream>
 #include <vector>
 #include <Eigen/Eigen>
@@ -67,6 +69,8 @@ main(int argc, char** argv)
 	{
 		// process callbacks
 		ros::spinOnce();
+
+		teleop_grasp::command_gripper(gesture_state);
 
 		// read and scale hand pose
 		Eigen::Isometry3d T_hand = Eigen::make_tf(pose_hand);
