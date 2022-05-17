@@ -34,14 +34,14 @@ namespace Eigen
 namespace franka_controllers
 {
 	class CartesianAdmittanceController final : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface,
-																									  hardware_interface::EffortJointInterface,
-																									  franka_hw::FrankaStateInterface>
+	                                                                                                  hardware_interface::EffortJointInterface,
+	                                                                                                  franka_hw::FrankaStateInterface>
 	{
 	public:
 
 		static inline constexpr auto CONTROLLER_NAME = "CartesianAdmittanceController";
 
-		CartesianAdmittanceController() {}
+		CartesianAdmittanceController() = default;
 		~CartesianAdmittanceController() { sub_command.shutdown(); }
 
 		bool
@@ -156,7 +156,7 @@ namespace franka_controllers
 		callback_command(const geometry_msgs::PoseStampedConstPtr& msg);
 		
 		void
-		callback_dynconf(franka_controllers::CartesianAdmittanceControllerConfig& conf, uint32_t level);
+		callback_dynconf(const franka_controllers::CartesianAdmittanceControllerConfig& conf, uint32_t level);
 
 	};
 }

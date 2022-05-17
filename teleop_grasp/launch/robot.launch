@@ -30,10 +30,7 @@
 	</node>
 
 	<!-- dynamic reconfigure -->
-	<!-- <node if="$(arg dynconf)" name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure"/> -->
-	<node if="$(arg dynconf)" name="$(anon adjust-controller)" pkg="dynamic_reconfigure" type="dynparam" args="set_from_parameters $(arg controller)/dynconf">
-		<rosparam file="$(find franka_controllers)/config/franka_controllers.yaml" subst_value="true"/>
-	</node>
+	<node if="$(arg dynconf)" name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" launch-prefix="bash -c 'sleep 5; $0 $@' "/>
 
 	<!-- simulation -->
 	<group if="$(arg sim)">

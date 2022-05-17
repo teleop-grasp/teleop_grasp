@@ -148,6 +148,7 @@ CartesianAdmittanceController::init(hardware_interface::RobotHW *hw, ros::NodeHa
 		Do = Eigen::Vector3d(vec_Do.data()).asDiagonal();
 		Mp = Eigen::Vector3d(vec_Mp.data()).asDiagonal();
 		Mo = Eigen::Vector3d(vec_Mo.data()).asDiagonal();
+		kc = 2.0 * sqrt(kn); // damping ratio of 1.0
 		// kp = Eigen::Vector6d(vec_kp.data()).asDiagonal();
 		// kd = Eigen::Vector6d(vec_kd.data()).asDiagonal();
 	}
@@ -192,15 +193,12 @@ CartesianAdmittanceController::init(hardware_interface::RobotHW *hw, ros::NodeHa
 		<< "Do = "                     << Do.diagonal().transpose() << "\n"
 		<< "Mp = "                     << Mp.diagonal().transpose() << "\n"
 		<< "Mo = "                     << Mo.diagonal().transpose() << "\n"
-		// << "kp = "                     << kp.diagonal().transpose() << "\n"
-		// << "kd = "                     << kd.diagonal().transpose() << "\n"
 		<< "kpp = "                    << kpp << "\n"
 		<< "kpo = "                    << kpo << "\n"
 		<< "kvp = "                    << kvp << "\n"
 		<< "kvo = "                    << kvo << "\n"
 		<< "kn = "                     << kn << "\n"
-		// << "kc = "                     << kc << "\n"
-		<< "kc = "                     << "2 * sqrt(kn)" << "\n"
+		<< "kc = "                     << kc << "\n"
 		<< "dtau_max = "               << dtau_max << "\n"
 		<< "slew_rate = "              << slew_rate  << "\n"
 		<< "state_publish_rate = "     << state_publish_rate  << "\n"
@@ -220,16 +218,26 @@ CartesianAdmittanceController::starting(const ros::Time& /* time */)
 	pose_d = Pose{ get_robot_state().p_e, get_robot_state().R_e };
 	buffer_pose_ref.initRT(pose_d);
 	Eigen::Isometry3d T_d = Eigen::Translation3d(std::get<0>(pose_d)) * Eigen::Isometry3d(std::get<1>(pose_d));
+	Eigen::Isometry3d EE_T_K = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.EE_T_K.data()));
 
 	// set desired nullspace to initial robot state
 	qN_d = get_robot_state().q;
 
-	// read defined transformations
-	// Eigen::Isometry3d O_T_EE = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
-	Eigen::Isometry3d EE_T_K = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.EE_T_K.data()));
-	// Eigen::Isometry3d NE_T_EE = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.NE_T_EE.data()));
-	// Eigen::Isometry3d F_T_NE = Eigen::Isometry3d(Eigen::Matrix4d::Map(robot_state.F_T_NE.data()));
-	// Eigen::Isometry3d O_T_NE = O_T_EE * NE_T_EE.inverse();
+	// load initial gains for dynamic reconfigure
+	std::lock_guard lock(mtx_dynconf);
+	this->dynconf.kpp = this->kpp;
+	this->dynconf.kpo = this->kpo;
+	this->dynconf.kvp = this->kvp;
+	this->dynconf.kvo = this->kvo;
+	this->dynconf.kn = this->kn;
+	this->dynconf.slew_rate = this->slew_rate;
+	this->dynconf.Kp = this->Kp(0);
+	this->dynconf.Ko = this->Ko(0);
+	this->dynconf.Dp = this->Dp(0);
+	this->dynconf.Do = this->Do(0);
+	this->dynconf.Mp = this->Mp(0);
+	this->dynconf.Mo = this->Mo(0);
+	server_dynconf->updateConfig(this->dynconf);
 
 	// print informations
 	ROS_INFO_STREAM("Initial configuration:\n"
@@ -241,12 +249,6 @@ CartesianAdmittanceController::starting(const ros::Time& /* time */)
 		<< "T_K:\n\n" << EE_T_K.matrix() << "\n"
 		<< "\n"
 	);
-
-	// ROS_INFO_STREAM("Currently defined transformations:\n\n");
-	// std::cout << "O_T_EE:\n\n" << O_T_EE.matrix() << std::endl;
-	// std::cout << "EE_T_K:\n\n" << EE_T_K.matrix() << std::endl;
-	// std::cout << "O_T_NE:\n\n" << O_T_NE.matrix() << std::endl;
-	// std::cout << "F_T_NE:\n\n" << F_T_NE.matrix() << std::endl;
 }
 
 void
@@ -262,8 +264,8 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	elapsed_time += period;
 
 	// update gains using dynamic_reconfigure
-	// if (got_new_dynconf_gains)
-		// this->dynamic_reconfigure_gains();
+	if (got_new_dynconf_gains)
+		this->dynamic_reconfigure_gains();
 
 	// read reference pose [p, R]
 	auto [p_ref, R_ref] = *buffer_pose_ref.readFromRT();
@@ -286,7 +288,7 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	Eigen::Vector6d a = pos_ori_control(p_c, p_e, R_c, R_e, dp_c, dp_e, w_c, w_e, ddp_c, dw_c);
 
 	// desired task-space torque (inverse dynamics)
-	Eigen::Matrix7x6d J_pinv = Eigen::pseudo_inverse(J, 0.2);
+	Eigen::Matrix7x6d J_pinv = Eigen::pseudo_inverse(J, 0.2); // damped pseudo inverse
 	// Eigen::Matrix7x6d J_pinv = M.inverse() * J.transpose() * (J * M.inverse() * J.transpose()).inverse(); // dynamically consistent pseudo-inverse
 	Eigen::Vector7d tau_task = M * J_pinv * (a - dJ * dq);
 	// Eigen::Vector7d tau_task = M * J_pinv * (a - dJ * dq) + J.transpose() * h_e;
@@ -295,7 +297,6 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	// (https://studywolf.wordpress.com/2013/09/17/robot-control-5-controlling-in-the-null-space/)
 	Eigen::Matrix6x7d J_T_pinv = Eigen::pseudo_inverse(J.transpose(), 0.2); // damped pseudo inverse
 	Eigen::Matrix7d I7x7d = Eigen::Matrix7d::Identity();
-	double kc = 2.0 * sqrt(kn); // damping ratio of 1.0
 	Eigen::Vector7d tau_null = (I7x7d - J.transpose() * J_T_pinv) * (kn * (qN_d - q) - kc * dq);
 
 	// desired joint torque
@@ -507,18 +508,19 @@ void
 CartesianAdmittanceController::dynamic_reconfigure_gains()
 {
 	std::lock_guard lock(mtx_dynconf);
-	ROS_WARN_STREAM("UPDATED GAINS!");
-	
+	got_new_dynconf_gains = false; // mark as read
+	ROS_WARN_STREAM("Updated gains via dynamic reconfigure!");
+
 	// tracking
 	kpp = dynconf.kpp;
 	kpo = dynconf.kpo;
 	kvp = dynconf.kvp;
 	kvo = dynconf.kvo;
-	slew_rate = dynconf.slew_rate;
-	
+
 	// nullspace
 	kn = dynconf.kn;
-	
+	kc = 2 * sqrt(kn);
+
 	// compliance
 	Kp = Eigen::Matrix3d::Identity() * dynconf.Kp;
 	Ko = Eigen::Matrix3d::Identity() * dynconf.Ko;
@@ -527,9 +529,8 @@ CartesianAdmittanceController::dynamic_reconfigure_gains()
 	Mp = Eigen::Matrix3d::Identity() * dynconf.Mp;
 	Mo = Eigen::Matrix3d::Identity() * dynconf.Mo;
 
-	
+	slew_rate = dynconf.slew_rate;
 
-	got_new_dynconf_gains = false;
 }
 
 Eigen::Vector7d
@@ -575,7 +576,7 @@ CartesianAdmittanceController::callback_command(const geometry_msgs::PoseStamped
 }
 
 void
-CartesianAdmittanceController::callback_dynconf(franka_controllers::CartesianAdmittanceControllerConfig& conf, uint32_t level)
+CartesianAdmittanceController::callback_dynconf(const franka_controllers::CartesianAdmittanceControllerConfig& conf, uint32_t /* level */)
 {
 	std::lock_guard lock(mtx_dynconf);
 	this->dynconf = conf;
