@@ -22,6 +22,7 @@
 
 	<!-- ROS packages -->
 	<depend>roscpp</depend>
+	<depend>rospy</depend>
 	<depend>roslib</depend>
 	<depend>gazebo_ros</depend>
 	<depend>ros_utils</depend>

@@ -1,0 +1,15 @@
+# matplotlib style file for 'teleop_grasp'
+# symlink from '<teleop_grasp_pkg>/config/teleop_grasp.mplstyle' --> '~/.config/matplotlib/teleop_grasp.mplstyle'
+
+# https://matplotlib.org/3.5.0/tutorials/introductory/customizing.html#the-default-matplotlibrc-file
+
+figure.figsize: 6, 6
+savefig.bbox: tight
+
+lines.linewidth : 3
+# lines.markersize : 10
+
+# axes.titlesize : 24
+axes.labelsize : 14
+ytick.labelsize : 12
+xtick.labelsize : 12
