@@ -4,9 +4,11 @@
 # https://matplotlib.org/3.5.0/tutorials/introductory/customizing.html#the-default-matplotlibrc-file
 
 figure.figsize: 6, 6
+figure.autolayout: True
 savefig.bbox: tight
+# text.usetex: true
 
-lines.linewidth : 3
+lines.linewidth : 2
 # lines.markersize : 10
 
 # axes.titlesize : 24

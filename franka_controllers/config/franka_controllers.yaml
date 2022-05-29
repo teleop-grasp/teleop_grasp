@@ -73,9 +73,11 @@ cartesian_admittance_controller:
     Mo: [1, 1, 1]
 
     # tracking
-    kpp: 200
+    # kpp: 200
+    kpp: 900
     kpo: 900
-    kvp: 28.28
+    # kvp: 28.28
+    kvp: 60
     kvo: 60
 
     # nullspace
