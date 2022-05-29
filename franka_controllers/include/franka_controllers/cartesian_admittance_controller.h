@@ -19,7 +19,6 @@
 #include <franka_controllers/CartesianAdmittanceControllerDebug.h>
 #include <dynamic_reconfigure/server.h>
 #include <franka_controllers/CartesianAdmittanceControllerConfig.h>
-#include <franka_controllers/compliance_paramConfig.h>
 
 namespace Eigen
 {
@@ -87,7 +86,6 @@ namespace franka_controllers
 		Pose                                          pose_d; // CHANGE TO STRUCT
 		Eigen::Vector7d                               qN_d;
 
-		// Eigen::Matrix6d                               kp, kd;
 		Eigen::Matrix3d                               Kp, Ko, Dp, Do, Mp, Mo;
 		double                                        kpp, kpo, kvp, kvo, kn, kc;
 		double                                        dtau_max;
@@ -145,9 +143,6 @@ namespace franka_controllers
 
 		void
 		dynamic_reconfigure_gains();
-
-		Eigen::Isometry3d
-		filter_desired_pose(const Eigen::Isometry3d& pose_ref);
 
 		Eigen::Vector7d
 		saturate_rotatum(const Eigen::Vector7d& tau_des, const double period = 0.001 /* [s] */);

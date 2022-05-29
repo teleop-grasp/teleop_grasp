@@ -32,7 +32,7 @@ find_package(
 		geometry_msgs
 		message_generation
 		message_runtime
-        dynamic_reconfigure
+		dynamic_reconfigure
 )
 
 # include directories
@@ -60,8 +60,7 @@ generate_messages(
 # dynamic reconfigure
 
 generate_dynamic_reconfigure_options(
-  config/cartesian_admittance_controller.cfg
-  config/compliance_param.cfg
+	config/cartesian_admittance_controller.cfg
 )
 
 ################################################################################################
@@ -89,7 +88,7 @@ catkin_package(
 		geometry_msgs
 		message_generation
 		message_runtime
-        dynamic_reconfigure
+		dynamic_reconfigure
 	DEPENDS
 		EIGEN3
 )
@@ -101,7 +100,6 @@ catkin_package(
 
 ## franka_controllers
 add_library(franka_controllers
-		# src/franka_controllers.cpp # interface
 		src/joint_pd_gravity_controller.cpp
 		src/cartesian_pd_nullspace_controller.cpp
 		src/cartesian_admittance_controller.cpp
@@ -128,13 +126,20 @@ install(
 	RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
 
-
-## install header files
+## header files
 install(
 	DIRECTORY
 		include/franka_controllers/
 	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-## install ros_control plugin
-install(FILES franka_controllers_plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+## ros_control plugin
+install(FILES
+	franka_controllers_plugin.xml
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+## config files
+install(DIRECTORY config
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)

@@ -10,6 +10,7 @@ find_package(
 	catkin REQUIRED
 	COMPONENTS
 		roscpp
+		rospy
 		roslib
 		gazebo_ros
 		ros_utils
@@ -31,6 +32,7 @@ catkin_package(
 		teleop_grasp
 	CATKIN_DEPENDS
 		roscpp
+		rospy
 		roslib
 		gazebo_ros
 		ros_utils
@@ -66,9 +68,6 @@ target_link_libraries(teleop_grasp ${catkin_LIBRARIES})
 add_executable(demo_teleop_grasp examples/demo_teleop_grasp.cpp)
 target_link_libraries(demo_teleop_grasp ${catkin_LIBRARIES} teleop_grasp)
 
-add_executable(pipeline src/pipeline.cpp)
-target_link_libraries(pipeline ${catkin_LIBRARIES} teleop_grasp)
-
 add_executable(teleoperation src/teleoperation.cpp)
 target_link_libraries(teleoperation ${catkin_LIBRARIES} teleop_grasp)
 
@@ -85,15 +84,14 @@ install(
 	RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
 
-## install header files
+## header files
 install(
 	DIRECTORY
 		include/teleop_grasp/
-		include/teleoperation/
 	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-## install gazebo stuff
+## gazebo stuff
 install(DIRECTORY models DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(DIRECTORY worlds DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
@@ -105,15 +103,9 @@ install(DIRECTORY config
 	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-################################################################################################
-
-# experiments (executables from /tests)
-
-# message(STATUS "Addings experiments from 'tests/*/*.cpp'...")
-# file(GLOB files CONFIGURE_DEPENDS "tests/*/*.cpp")
-# foreach(file ${files})
-# 	get_filename_component(name ${file} NAME_WE)
-# 	message(STATUS "Found experiment: ${name}...")
-# 	add_executable(${name} ${file})
-# 	target_link_libraries(${name} ${catkin_LIBRARIES} teleop_grasp)
-# endforeach()
+## matplotlib style
+add_custom_target(mplstyle_symlink ALL
+	COMMAND ${CMAKE_COMMAND} -E make_directory "~/.config/matplotlib/stylelib"
+	COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_CURRENT_LIST_DIR}/config/teleop_grasp.mplstyle" "~/.config/matplotlib/stylelib/teleop_grasp.mplstyle"
+)
+# configure_file(config/teleop_grasp.mplstyle ~/.config/matplotlib/stylelib/teleop_grasp.mplstyle COPYONLY)

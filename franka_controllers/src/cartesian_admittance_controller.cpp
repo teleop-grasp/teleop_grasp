@@ -130,8 +130,6 @@ CartesianAdmittanceController::init(hardware_interface::RobotHW *hw, ros::NodeHa
 		not nh.getParam("kvo", kvo) or
 		not nh.getParam("kn", kn) or
 		// not nh.getParam("kc", kc) or
-		// not nh.getParam("kp", vec_kp) or
-		// not nh.getParam("kd", vec_kd) or
 		not nh.getParam("dtau_max", dtau_max) or
 		not nh.getParam("slew_rate", slew_rate) or
 		not nh.getParam("state_publish_rate", state_publish_rate)
@@ -149,8 +147,6 @@ CartesianAdmittanceController::init(hardware_interface::RobotHW *hw, ros::NodeHa
 		Mp = Eigen::Vector3d(vec_Mp.data()).asDiagonal();
 		Mo = Eigen::Vector3d(vec_Mo.data()).asDiagonal();
 		kc = 2.0 * sqrt(kn); // damping ratio of 1.0
-		// kp = Eigen::Vector6d(vec_kp.data()).asDiagonal();
-		// kd = Eigen::Vector6d(vec_kd.data()).asDiagonal();
 	}
 
 	// subscribe to command topic for desired pose
