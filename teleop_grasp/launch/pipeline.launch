@@ -17,7 +17,8 @@
 	<arg name="world"              doc="The Gazebo world to use"                default="workcell.world"/>
 
 	<arg name="controller"         doc="Controller to use with ros_control"     default="cartesian_admittance_controller"/>
-	<arg name="use_gripper"        doc="Use the Franka gripper"                 default="false"/>
+	<arg name="use_gripper"        doc="Use the Franka gripper"                 default="true"/>
+	<!-- <arg name="use_gripper"        doc="Use the Franka gripper"                 default="false"/> -->
 	<arg name="rviz"               doc="Launch RVIZ"                            default="false"/>
 	<arg name="rviz_marker"        doc="Launch RVIZ with interactive marker"    default="$(arg rviz)"/>
 	<arg name="plotjuggler"        doc="Launch PlotJuggler"                     default="false"/>

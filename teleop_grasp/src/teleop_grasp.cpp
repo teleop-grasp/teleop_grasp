@@ -91,31 +91,40 @@ teleop_grasp::command_pose_robot(const geometry_msgs::Pose& pose, const std::str
 void
 teleop_grasp::command_gripper(const bool& open_or_close)
 {
+	static actionlib::SimpleActionClient<franka_gripper::MoveAction>   close("/franka_gripper/move", true);
+	static actionlib::SimpleActionClient<franka_gripper::HomingAction> open("/franka_gripper/homing", true);
 
-	static actionlib::SimpleActionClient<franka_gripper::MoveAction> action("/franka_gripper/move", true);
 	static auto wait_server = [&]
 	{
-		action.waitForServer();
+		open.waitForServer();
+		close.waitForServer();
 		return true;
 	}();
 
-	static franka_gripper::MoveAction msg;
-	msg.action_goal.goal.speed = 0.2;
+	static franka_gripper::MoveAction   msg_move;
+	static franka_gripper::HomingAction msg_home;
+
+	// msg_home.action_goal.goal;
+	// msg_home.action_goal.goal.speed = 0.2;
 
 	// if (open_or_close == teleop_grasp::gesture_state_prev )
 	// 	return;
 
-	if (open_or_close == bool(teleop_grasp::GripperState::OPEN))
+	if (open_or_close == bool(teleop_grasp::GripperState::OPEN)) // OPEN
 	{
+		// roslaunch (pipeline) --> rostopic list | grep franka_gripper
+		// msg_home.action_goal.goal = 0.045;
+		// open.sendGoal(msg.action_goal.goal);
 		teleop_grasp::gesture_state_prev = true;
-		msg.action_goal.goal.width = 0.045;
-		action.sendGoal(msg.action_goal.goal);
+		open.sendGoal(msg_home.action_goal.goal);
 	}
-	else
+	else // CLOSE
 	{
-		teleop_grasp::gesture_state_prev = false;
-		msg.action_goal.goal.width = 0.01;
-		action.sendGoal(msg.action_goal.goal);
+		// teleop_grasp::gesture_state_prev = false;
+		// msg.action_goal.goal.width = 0.01;
+		msg_move.action_goal.goal.speed = 0.2;
+		msg_move.action_goal.goal.width = 0.01;
+		close.sendGoal(msg_move.action_goal.goal);
 	}
 }
 
