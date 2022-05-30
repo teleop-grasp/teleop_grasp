@@ -63,20 +63,20 @@ if __name__ == "__main__":
 
 	plt.style.use("teleop_grasp")
 
-	## force (measured + desired)
+	## force (measured)
 	fig, ax = plt.subplots()
-	ax.plot(df_ee["Time"], df_ee["h_e.force.x"], label=r"$f_{e,x}$", color="r", alpha=0.25)
-	ax.plot(df_ee["Time"], df_ee["h_e.force.y"], label=r"$f_{e,y}$", color="g", alpha=0.25)
-	ax.plot(df_ee["Time"], df_ee["h_e.force.z"], label=r"$f_{e,z}$", color="b", alpha=0.25)
+	ax.plot(df_ee["Time"], df_ee["h_e.force.x"], label=r"$f_{e,x}$", color="r")
+	ax.plot(df_ee["Time"], df_ee["h_e.force.y"], label=r"$f_{e,y}$", color="g")
+	ax.plot(df_ee["Time"], df_ee["h_e.force.z"], label=r"$f_{e,z}$", color="b")
 	ax.set_ylabel("Force [N m]"); ax.set_xlabel("Time [s]"); ax.legend(); ax.grid()
 	fig.savefig(f"{dir_img}/{test_name}-force.pdf")
 
-	## torque (measured + desired)
+	## torque (measured)
 	fig, ax = plt.subplots()
-	ax.plot(df_ee["Time"], df_ee["h_e.torque.x"], label=r"$\mu_{e,x}$", color="r", alpha=0.25)
-	ax.plot(df_ee["Time"], df_ee["h_e.torque.y"], label=r"$\mu_{e,y}$", color="g", alpha=0.25)
-	ax.plot(df_ee["Time"], df_ee["h_e.torque.z"], label=r"$\mu_{e,z}$", color="b", alpha=0.25)
-	ax.set_ylabel("Force [N m]"); ax.set_xlabel("Time [s]"); ax.legend(); ax.grid()
+	ax.plot(df_ee["Time"], df_ee["h_e.torque.x"], label=r"$\mu_{e,x}$", color="r")
+	ax.plot(df_ee["Time"], df_ee["h_e.torque.y"], label=r"$\mu_{e,y}$", color="g")
+	ax.plot(df_ee["Time"], df_ee["h_e.torque.z"], label=r"$\mu_{e,z}$", color="b")
+	ax.set_ylabel("Torque [N m]"); ax.set_xlabel("Time [s]"); ax.legend(); ax.grid()
 	fig.savefig(f"{dir_img}/{test_name}-torque.pdf")
 
 	## compliant frame: position
