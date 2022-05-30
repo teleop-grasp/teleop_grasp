@@ -32,11 +32,12 @@ if __name__ == "__main__":
 	(node_name, test_name, dir_data, dir_img) = setup_test(filepath=__file__, test_id="")
 	rospy.init_node(f"test_{node_name}")
 
-	info = subprocess.check_output(["rosrun", "dynamic_reconfigure", "dynparam", "get", "/cartesian_admittance_controller"])
-	print(info, file=open(f"{dir_data}/{test_name}.txt", "w", encoding="utf-8"))
-
 	bag_path = f"{dir_data}/{test_name}.bag"
 	if not os.path.exists(bag_path): # skip if already done
+
+		# read current impedance gains
+		info = subprocess.check_output(["rosrun", "dynamic_reconfigure", "dynparam", "get", "/cartesian_admittance_controller"])
+		print(info, file=open(f"{dir_data}/{test_name}.txt", "w", encoding="utf-8"))
 
 		# setup rosbag
 		bag = rosbag.Bag(bag_path, "w")
