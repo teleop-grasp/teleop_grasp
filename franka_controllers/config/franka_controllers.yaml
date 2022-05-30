@@ -48,7 +48,7 @@ cartesian_admittance_controller:
         - $(arg arm_id)_joint6
         - $(arg arm_id)_joint7
 
-    #  compliance trans stiff
+    # orientational compliance
     # Kp: [1200, 1200, 1200]
     # Ko: [7.0, 7.0, 7.0]
     # Dp: [154.92, 154.92, 154.92]
@@ -56,7 +56,7 @@ cartesian_admittance_controller:
     # Mp: [5, 5, 5]
     # Mo: [0.05, 0.05, 0.05]
 
-    # compliance orientation stiff
+    # translational compliance
     # Kp: [50, 50, 50]
     # Ko: [60, 60, 60]
     # Dp: [20, 20, 20]
@@ -64,20 +64,18 @@ cartesian_admittance_controller:
     # Mp: [2, 2, 2]
     # Mo: [5, 5, 5]
 
-    # best in simulation
-    Kp: [400, 400, 400]
+    # baseline
+    Kp: [1000, 1000, 1000]
     Ko: [200, 200, 200]
     Dp: [40, 40, 40]
     Do: [28.28, 28.28, 28.28]
-    Mp: [1, 1, 1]
-    Mo: [1, 1, 1]
+    Mp: [2, 2, 2]
+    Mo: [5, 5, 5]
 
     # tracking
-    # kpp: 200
-    kpp: 900
+    kpp: 200
     kpo: 900
-    # kvp: 28.28
-    kvp: 60
+    kvp: 28.28
     kvo: 60
 
     # nullspace
