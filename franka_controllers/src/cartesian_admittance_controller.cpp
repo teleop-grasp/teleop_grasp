@@ -310,6 +310,9 @@ CartesianAdmittanceController::update(const ros::Time& /* time */, const ros::Du
 	// update debug info
 	if (mtx_msg_debug.try_lock())
 	{
+		tf::vectorEigenToMsg(p_e, msg_debug.p_e);
+		tf::vectorEigenToMsg(Eigen::Quaterniond(R_e).vec(), msg_debug.eps_e);
+		tf::poseEigenToMsg(Eigen::Isometry3d(Eigen::Translation3d(p_e) * Eigen::Isometry3d(R_e)), msg_debug.T_e.pose);
 		msg_debug.tau_d.data = std::vector<double>(tau_d.data(), tau_d.data() + tau_d.size());
 		mtx_msg_debug.unlock();
 	}

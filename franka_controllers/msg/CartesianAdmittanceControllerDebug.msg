@@ -3,6 +3,10 @@ std_msgs/Float64MultiArray tau_d
 geometry_msgs/Wrench h_e
 geometry_msgs/Vector3 mu_d_e
 
+geometry_msgs/PoseStamped T_e
+geometry_msgs/Vector3 p_e
+geometry_msgs/Vector3 eps_e
+
 geometry_msgs/PoseStamped T_d
 geometry_msgs/Vector3 p_d
 geometry_msgs/Vector3 eps_d
